@@ -1,4 +1,13 @@
-<!-- includes/layouts/header.php -->
-<header class="main-header">
-    <h1>SkillShare System</h1>
-</header>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillShare Admin Dashboard</title>
+
+    <!-- Link CSS -->
+    <link rel="stylesheet" href="../../assets/css/layout.css">
+</head>
+
+<body>

@@ -30,3 +30,12 @@ function checkRole($requiredRole)
         exit();
     }
 }
+function logActivity($conn, $user_id, $username, $action)
+{
+    $user_id = (int)$user_id;
+    $username = mysqli_real_escape_string($conn, $username);
+    $action = mysqli_real_escape_string($conn, $action);
+
+    $sql = "INSERT INTO activities (user_id, username, action) VALUES ($user_id, '$username', '$action')";
+    mysqli_query($conn, $sql);
+}
