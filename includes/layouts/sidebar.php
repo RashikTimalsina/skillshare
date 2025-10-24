@@ -5,6 +5,7 @@
             <li><a href="../pages/users.php">Users</a></li>
             <li><a href="../pages/skills.php">Skills</a></li>
             <li><a href="../pages/categories.php">Categories</a></li>
+            <li><a href="../pages/enrollments.php">Enrollments</a></li>
             <li><a href="../pages/feedbacks.php">Feedback</a></li>
 
         <?php elseif ($_SESSION['user_role'] === 'teacher'): ?>

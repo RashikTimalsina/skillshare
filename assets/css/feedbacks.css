@@ -1,0 +1,30 @@
+@import url("users.css");
+
+/* Star Rating Styles */
+.star-rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+  gap: 4px;
+}
+.star-rating input {
+  display: none;
+}
+.star-rating label {
+  font-size: 20px;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: #f7c600;
+}
+
+/* Display stars (read-only) */
+.display-stars {
+  color: #f7c600;
+  font-size: 18px;
+  letter-spacing: 2px;
+}

@@ -15,6 +15,8 @@
 
     <div class="topbar-right">
         <div class="icon-placeholder">🔔</div>
-        <div class="icon-placeholder">👤</div>
+        <div class="icon-placeholder">
+            <a href="../../pages/profile.php"> 👤</a>
+        </div>
     </div>
 </header>
