@@ -97,7 +97,6 @@ if ($edit_skill_id) {
 
 <div class="layout-wrapper">
     <?php include('../includes/layouts/sidebar.php'); ?>
-
     <div class="main-content-wrapper">
         <?php include('../includes/layouts/topbar.php'); ?>
 
@@ -119,84 +118,78 @@ if ($edit_skill_id) {
             </div>
 
             <!-- Skills Table -->
-            <?php if ($role === 'admin'): ?>
-                <form method="POST">
-                <?php endif; ?>
-                <div class="table-container">
-                    <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Skill Name</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <?php if ($role === 'admin') echo '<th>Actions</th>'; ?>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($result->num_rows > 0): ?>
-                                <?php while ($row = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?= $row['skill_id'] ?></td>
-                                        <td>
-                                            <?php if ($role === 'admin' && $edit_skill_id == $row['skill_id']): ?>
+            <div class="table-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Skill Name</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <?php if ($role === 'admin') echo '<th>Actions</th>'; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($result->num_rows > 0): ?>
+                            <?php while ($row = $result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?= $row['skill_id'] ?></td>
+                                    <td>
+                                        <?php if ($role === 'admin' && $edit_skill_id == $row['skill_id']): ?>
+                                            <form method="POST" style="display:inline-block;">
                                                 <input type="hidden" name="skill_id" value="<?= $row['skill_id'] ?>">
                                                 <input type="text" name="skill_name" value="<?= htmlspecialchars($row['skill_name']) ?>" required>
-                                            <?php else: ?>
-                                                <?= htmlspecialchars($row['skill_name']) ?>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($role === 'admin' && $edit_skill_id == $row['skill_id']): ?>
-                                                <textarea name="description" required><?= htmlspecialchars($row['description']) ?></textarea>
-                                            <?php else: ?>
-                                                <?= htmlspecialchars($row['description']) ?>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($role === 'admin' && $edit_skill_id == $row['skill_id']): ?>
-                                                <select name="category_id" required>
-                                                    <?php
-                                                    $categories->data_seek(0);
-                                                    while ($cat = $categories->fetch_assoc()) {
-                                                        $selected = $cat['category_id'] == $row['categories_category_id'] ? 'selected' : '';
-                                                        echo "<option value='{$cat['category_id']}' $selected>{$cat['category_name']}</option>";
-                                                    }
-                                                    ?>
-                                                </select>
-                                            <?php else: ?>
-                                                <?= htmlspecialchars($row['category_name'] ?? '—') ?>
-                                            <?php endif; ?>
-                                        </td>
-
-                                        <?php if ($role === 'admin'): ?>
-                                            <td>
-                                                <?php if ($edit_skill_id == $row['skill_id']): ?>
-                                                    <button type="submit" name="edit_skill" class="action-link">Save</button>
-                                                    <a href="skills.php" class="action-link delete">Cancel</a>
-                                                <?php else: ?>
-                                                    <a href="?edit=<?= $row['skill_id'] ?>" class="action-link">✏️ Edit</a>
-                                                    <form method="POST" class="delete-skill-form" style="display:inline-block;">
-                                                        <input type="hidden" name="skill_id" value="<?= $row['skill_id'] ?>">
-                                                        <button type="submit" name="delete_skill" class="action-link delete">🗑️ Delete</button>
-                                                    </form>
-
-                                                <?php endif; ?>
-                                            </td>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($row['skill_name']) ?>
                                         <?php endif; ?>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="<?= $role === 'admin' ? 5 : 4 ?>" style="text-align:center;">No skills found.</td>
+                                    </td>
+                                    <td>
+                                        <?php if ($role === 'admin' && $edit_skill_id == $row['skill_id']): ?>
+                                            <textarea name="description" required><?= htmlspecialchars($row['description']) ?></textarea>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($row['description']) ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($role === 'admin' && $edit_skill_id == $row['skill_id']): ?>
+                                            <select name="category_id" required>
+                                                <?php
+                                                $categories->data_seek(0);
+                                                while ($cat = $categories->fetch_assoc()) {
+                                                    $selected = $cat['category_id'] == $row['categories_category_id'] ? 'selected' : '';
+                                                    echo "<option value='{$cat['category_id']}' $selected>{$cat['category_name']}</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($row['category_name'] ?? '—') ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <?php if ($role === 'admin'): ?>
+                                        <td>
+                                            <?php if ($edit_skill_id == $row['skill_id']): ?>
+                                                    <button type="submit" name="edit_skill" class="action-link">Save</button>
+                                                </form>
+                                                <a href="skills.php" class="action-link delete">Cancel</a>
+                                            <?php else: ?>
+                                                <a href="?edit=<?= $row['skill_id'] ?>" class="action-link">✏️ Edit</a>
+                                                <form method="POST" class="delete-skill-form" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this skill?');">
+                                                    <input type="hidden" name="skill_id" value="<?= $row['skill_id'] ?>">
+                                                    <button type="submit" name="delete_skill" class="action-link delete">🗑️ Delete</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <?php if ($role === 'admin'): ?>
-                </form>
-            <?php endif; ?>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="<?= $role === 'admin' ? 5 : 4 ?>" style="text-align:center;">No skills found.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Add Skill Button -->
             <?php if ($role === 'admin'): ?>
@@ -204,56 +197,50 @@ if ($edit_skill_id) {
                     <button id="addSkillBtn" class="add-user-btn">+ Add Skill</button>
                 </div>
 
+                <div id="addSkillContainer"></div>
+
                 <script>
                     const addBtn = document.getElementById('addSkillBtn');
-                    const tbody = document.querySelector('.users-table tbody');
+                    const container = document.getElementById('addSkillContainer');
 
                     addBtn.addEventListener('click', () => {
-                        if (document.getElementById('newSkillRow')) return;
+                        if (document.getElementById('newSkillForm')) return;
 
-                        const newRow = document.createElement('tr');
-                        newRow.id = 'newSkillRow';
-                        newRow.innerHTML = `
-                            <td>New</td>
-                            <td><input type="text" name="skill_name" placeholder="Skill Name" required></td>
-                            <td><textarea name="description" placeholder="Description" required></textarea></td>
-                            <td>
-                                <select name="category_id" required>
-                                    <option value="">Select Category</option>
-                                    <?php
-                                    $categories->data_seek(0);
-                                    while ($cat = $categories->fetch_assoc()) {
-                                        echo "<option value='{$cat['category_id']}'>{$cat['category_name']}</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </td>
-                            <td>
-                                <button type="submit" name="add_skill" class="action-link">Save</button>
-                                <button type="button" id="cancelNewSkill" class="action-link delete">Cancel</button>
-                            </td>
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.id = 'newSkillForm';
+                        form.innerHTML = `
+                            <table class="users-table" style="margin-top:10px;">
+                                <tr>
+                                    <td>New</td>
+                                    <td><input type="text" name="skill_name" placeholder="Skill Name" required></td>
+                                    <td><textarea name="description" placeholder="Description" required></textarea></td>
+                                    <td>
+                                        <select name="category_id" required>
+                                            <option value="">Select Category</option>
+                                            <?php
+                                            $categories->data_seek(0);
+                                            while ($cat = $categories->fetch_assoc()) {
+                                                echo "<option value='{$cat['category_id']}'>{$cat['category_name']}</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="submit" name="add_skill" class="action-link">Save</button>
+                                        <button type="button" id="cancelNewSkill" class="action-link delete">Cancel</button>
+                                    </td>
+                                </tr>
+                            </table>
                         `;
-                        tbody.appendChild(newRow);
+                        container.appendChild(form);
 
-                        document.getElementById('cancelNewSkill').addEventListener('click', () => newRow.remove());
+                        document.getElementById('cancelNewSkill').addEventListener('click', () => form.remove());
                     });
 
-                    // Sidebar toggle
                     const hamburger = document.getElementById('hamburger-btn');
                     const sidebar = document.querySelector('.sidebar');
                     hamburger.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-                </script>
-                <script>
-                    document.addEventListener('click', function(e) {
-                        if (e.target && e.target.matches('.delete-skill-form button, .delete-skill-form button *')) {
-                            e.preventDefault();
-                            const form = e.target.closest('form');
-                            const confirmDelete = confirm("⚠️ Are you sure you want to delete this skill?");
-                            if (confirmDelete) {
-                                form.submit();
-                            }
-                        }
-                    });
                 </script>
             <?php endif; ?>
         </div>

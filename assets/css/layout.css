@@ -1,19 +1,26 @@
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+/* ===================== GLOBAL STYLES ===================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
 
+/* ===================== LAYOUT WRAPPER ===================== */
 .layout-wrapper {
   display: flex;
 }
 
-/* Sidebar */
+/* ===================== SIDEBAR ===================== */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
+  height: 100vh;
   width: 220px;
   background: #f8f8f8;
-  padding-top: 60px;
-  transition: width 0.3s;
+  padding-top: 60px; /* space for topbar */
+  transition: width 0.3s ease;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -21,14 +28,41 @@
   border-right: 1px solid #ccc;
   z-index: 1000;
 }
-.sidebar.collapsed { width: 60px; overflow: hidden; }
-.sidebar ul { list-style: none; }
-.sidebar ul li { padding: 15px 20px; }
-.sidebar ul li a { text-decoration: none; color: black; display: block; }
-.sidebar ul li a:hover { background-color: #e0e0e0; border-radius: 4px; }
-.bottom-links { margin-top: auto; border-top: 1px solid #ddd; }
 
-/* Topbar */
+.sidebar.collapsed {
+  width: 60px;
+  overflow: hidden;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  padding: 15px 20px;
+}
+
+.sidebar ul li a {
+  text-decoration: none;
+  color: #000;
+  display: block;
+  transition: background 0.2s ease;
+}
+
+.sidebar ul li a:hover {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+/* Bottom links in sidebar */
+.bottom-links {
+  margin-top: auto;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
+
+/* ===================== TOPBAR ===================== */
 .topbar {
   position: fixed;
   top: 0;
@@ -43,39 +77,110 @@
   padding: 0 20px;
   z-index: 1100;
 }
-.dashboard-title { font-size: 1.2rem; }
-.topbar-right .icon-placeholder { margin-left: 15px; cursor: pointer; }
 
-/* Footer */
+.dashboard-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.topbar-right .icon-placeholder {
+  margin-left: 15px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.topbar-right .icon-placeholder:hover {
+  transform: scale(1.1);
+}
+
+/* ===================== FOOTER ===================== */
 .footer {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
+  height: 60px;
   background: #fff;
   border-top: 1px solid #ccc;
   text-align: center;
-  padding: 10px 0;
+  padding: 20px 0 0 0;
   z-index: 1000;
+  font-size: 0.9rem;
+  color: #555;
 }
 
-/* Main content wrapper */
+/* ===================== MAIN CONTENT WRAPPER ===================== */
 .main-content-wrapper {
   margin-left: 220px;
   width: calc(100% - 220px);
-  transition: margin-left 0.3s;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease, width 0.3s ease;
 }
-.sidebar.collapsed ~ .main-content-wrapper { margin-left: 60px; width: calc(100% - 60px); }
 
-/* Main content */
+.sidebar.collapsed ~ .main-content-wrapper {
+  margin-left: 60px;
+  width: calc(100% - 60px);
+}
+
+/* ===================== MAIN CONTENT ===================== */
 .main-content {
-  margin-top: 60px;
-  padding: 20px;
-  height: calc(100vh - 60px - 40px);
+  margin-top: 60px; /* below topbar */
+  padding: 20px 30px;
+  height: calc(100vh - 60px - 60px); /* topbar + footer */
   overflow-y: auto;
   background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  box-sizing: border-box;
 }
 
-/* Scrollbar */
-.main-content::-webkit-scrollbar { width: 8px; }
-.main-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+/* ===================== SCROLLBAR STYLING ===================== */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+/* ===================== RESPONSIVE SIDEBAR & MAIN ===================== */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 60px;
+  }
+
+  .main-content-wrapper {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: -220px;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.active {
+    left: 0;
+  }
+}

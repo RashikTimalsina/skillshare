@@ -1,12 +1,10 @@
 <?php
-// session_check.php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Force logout if session not set
+// Force logout if user not logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: /index.php");
+    header("Location: /auth/login.php");
     exit();
-
 }
