@@ -7,7 +7,7 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // collect + sanitize
-    $fullname = trim($_POST['fullname'] ?? '');
+    $username = trim($_POST['username'] ?? '');
     $email    = strtolower(trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm_password'] ?? '';
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $agree    = isset($_POST['agree']);
 
     // validation
-    if ($fullname === '') $errors[] = "Full name is required.";
+    if ($username === '') $errors[] = "Username is required.";
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email is required.";
     if (strlen($password) < 8) $errors[] = "Password must be at least 8 characters.";
     if ($password !== $confirm) $errors[] = "Passwords do not match.";
@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
             $hash = password_hash($password, PASSWORD_BCRYPT);
 
-            $ins = $conn->prepare("INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)");
-            $ins->bind_param('ssss', $fullname, $email, $hash, $role);
+            $ins = $conn->prepare("INSERT INTO users (user_name, email, password, role) VALUES (?, ?, ?, ?)");
+            $ins->bind_param('ssss', $username, $email, $hash, $role);
 
             if ($ins->execute()) {
                 // Auto-login
@@ -210,8 +210,8 @@ ob_end_flush(); // flush output
             <div class="row">
                 <div style="flex:1">
                     <div class="field">
-                        <label for="fullname">Full Name</label>
-                        <input id="fullname" name="fullname" type="text" value="<?php echo htmlspecialchars($_POST['fullname'] ?? ''); ?>" placeholder="First and Last name" required>
+                        <label for="username">Full Name</label>
+                        <input id="username" name="username" type="text" value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>" placeholder="First and Last name" required>
                     </div>
                 </div>
             </div>

@@ -3,6 +3,7 @@ ob_start();
 session_start();
 require_once __DIR__ . '/../includes/config.php';
 
+
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

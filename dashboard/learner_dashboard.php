@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 include('../includes/config.php');
 require_once __DIR__ . '/../includes/functions.php';
 include('../middlewares/session_check.php');
@@ -6,24 +10,40 @@ include('../middlewares/role_check.php');
 checkRole('learner');
 
 $learner_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'] ?? 'Unknown User';
 
-// Fetch last 10 activities
-$limit = 10;
-$result = mysqli_query($conn, "
+
+if (!isset($_SESSION['dashboard_visited'])) {
+    logActivity($conn, $learner_id, $user_name, "Logged in ");
+    $_SESSION['dashboard_visited'] = true;
+}
+
+
+// Dashboard cards
+$cards = [
+    'Skills Enrolled' => "SELECT COUNT(DISTINCT skills_skill_id) AS total FROM enrollments WHERE users_user_id='$learner_id'",
+    'Skills Completed' => "SELECT COUNT(DISTINCT skills_skill_id) AS total FROM enrollments WHERE users_user_id='$learner_id' AND status='inactive'",
+    'Certificates Earned' => "SELECT COUNT(*) AS total FROM certificates WHERE learner_id='$learner_id' AND status='active'",
+    'Feedback Given' => "SELECT COUNT(*) AS total FROM feedback WHERE users_user_id='$learner_id' AND feedback_given='yes'",
+];
+
+// Recent activities (last 10)
+$activities_query = "
     SELECT created_at, action
     FROM activities
-    WHERE user_id = '$learner_id'
+    WHERE user_id='$learner_id'
     ORDER BY created_at DESC
-    LIMIT $limit
-");
-
+    LIMIT 10
+";
+$activities_res = mysqli_query($conn, $activities_query);
 $recent_activities = [];
-if ($result && mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
+if ($activities_res && mysqli_num_rows($activities_res) > 0) {
+    while ($row = mysqli_fetch_assoc($activities_res)) {
         $recent_activities[] = $row;
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -38,39 +58,12 @@ if ($result && mysqli_num_rows($result) > 0) {
 <body>
     <div class="layout-wrapper">
         <?php include('../includes/layouts/sidebar.php'); ?>
-
         <div class="main-content-wrapper">
             <?php include('../includes/layouts/topbar.php'); ?>
-
             <main class="main-content">
-                <!-- DASHBOARD OVERVIEW -->
+                <!-- DASHBOARD CARDS -->
                 <section class="dashboard-overview">
                     <?php
-                    $cards = [
-                        'Skills Enrolled' => "
-                        SELECT COUNT(DISTINCT e.skills_skill_id) AS total
-                        FROM enrollments e
-                        WHERE e.users_user_id = '$learner_id'
-                    ",
-                        'Skills Completed' => "
-                        SELECT COUNT(DISTINCT e.skills_skill_id) AS total
-                        FROM enrollments e
-                        WHERE e.users_user_id = '$learner_id'
-                        AND e.status = 'inactive'
-                    ",
-                        'Certificates Earned' => "
-                        SELECT COUNT(*) AS total
-                        FROM certificates c
-                        WHERE c.learner_id = '$learner_id'
-                        AND c.status = 'active'
-                    ",
-                        'Feedback Given' => "
-                        SELECT COUNT(*) AS total
-                        FROM feedback f
-                        WHERE f.users_user_id = '$learner_id'
-                        AND f.feedback_given = 'yes'
-                    "
-                    ];
                     foreach ($cards as $title => $query) {
                         $res = mysqli_query($conn, $query);
                         $count = ($res && mysqli_num_rows($res) > 0) ? mysqli_fetch_assoc($res)['total'] : 0;
@@ -89,42 +82,47 @@ if ($result && mysqli_num_rows($result) > 0) {
                                 <th>Activity</th>
                             </tr>
                         </thead>
-                        <tbody id="activities-tbody">
-                            <?php foreach ($recent_activities as $i => $act): ?>
-                                <tr class="activity-row" style="<?= $i >= 5 ? 'display:none;' : '' ?>">
-                                    <td><?= date('d M Y, H:i', strtotime($act['created_at'])) ?></td>
-                                    <td><?= htmlspecialchars($act['action']) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            <?php if (empty($recent_activities)) echo "<tr><td colspan='2'>No recent activities</td></tr>"; ?>
+                        <tbody>
+                            <?php
+                            if (!empty($recent_activities)) {
+                                foreach ($recent_activities as $i => $act) {
+                                    $hide = $i >= 5 ? 'display:none;' : '';
+                                    echo "<tr class='activity-row' style='$hide'>
+                                        <td>" . date('d M Y, H:i', strtotime($act['created_at'])) . "</td>
+                                        <td>" . htmlspecialchars($act['action']) . "</td>
+                                      </tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='2' style='text-align:center;'>No recent activities</td></tr>";
+                            }
+                            ?>
                         </tbody>
                     </table>
                     <div style="text-align:center;">
-                        <button id="show-more-btn">Show More</button>
+                        <button id="show-more-btn" style="display:<?= count($recent_activities) > 5 ? 'inline-block' : 'none' ?>;">Show More</button>
                     </div>
                 </section>
 
                 <!-- QUICK ACTIONS -->
                 <section class="quick-actions">
-                    <div class="action-card" onclick="window.location.href='../pages/learner/enroll_skill.php'">
+                    <div class="action-card" onclick="window.location.href='../pages/browse_skills.php'">
                         <h3>Enroll in New Skill</h3>
                         <p>Browse and join available skills</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/learner/my_skills.php'">
+                    <div class="action-card" onclick="window.location.href='../pages/skills.php'">
                         <h3>My Skills</h3>
                         <p>View your enrolled and completed skills</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/learner/give_feedback.php'">
+                    <div class="action-card" onclick="window.location.href='../pages/feedbacks.php'">
                         <h3>Give Feedback</h3>
                         <p>Share feedback on your learning experiences</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/learner/certificates.php'">
+                    <div class="action-card" onclick="window.location.href='../pages/certificates.php'">
                         <h3>My Certificates</h3>
                         <p>View and download earned certificates</p>
                     </div>
                 </section>
             </main>
-
             <?php include('../includes/layouts/footer.php'); ?>
         </div>
     </div>

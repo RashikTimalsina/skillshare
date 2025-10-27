@@ -17,41 +17,31 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
-    $full_name = trim($_POST['full_name'] ?? '');
+    $user_name = trim($_POST['user_name'] ?? '');
     $bio = trim($_POST['bio'] ?? '');
     $selected_skills = isset($_POST['skills']) ? array_map('intval', $_POST['skills']) : [];
     $profile_pic_path = $user['profile_pic'];
 
     // Validation
-    if ($full_name === '') $errors[] = 'Full name is required.';
+    if ($user_name === '') $errors[] = 'Full name is required.';
     if (count($selected_skills) < 2) $errors[] = 'Please select at least 2 skills.';
 
-    // Handle profile picture upload
-    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
-        $fileTmp = $_FILES['profile_pic']['tmp_name'];
-        $fileName = basename($_FILES['profile_pic']['name']);
-        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-
-        if (!in_array($fileExt, $allowed)) {
-            $errors[] = 'Only JPG, JPEG, PNG, GIF, or WEBP images are allowed.';
-        } else {
-            $newFileName = 'uploads/profile_pics/' . $userId . '_' . time() . '.' . $fileExt;
-            if (!is_dir('uploads/profile_pics')) mkdir('uploads/profile_pics', 0755, true);
-            if (move_uploaded_file($fileTmp, __DIR__ . '/../' . $newFileName)) {
-                $profile_pic_path = $newFileName;
-            } else {
-                $errors[] = 'Failed to upload the profile picture.';
-            }
-        }
+    // Profile picture upload
+    if (!empty($_FILES['profile_pic']['name'])) {
+        [$newPath, $err] = saveProfilePicture($_FILES['profile_pic'], $userId);
+        if ($err) $errors[] = $err;
+        else $profile_pic_path = $newPath;
     }
 
     if (empty($errors)) {
-        updateUserProfileWithSkills($conn, $userId, $full_name, $bio, $selected_skills, $profile_pic_path);
+        updateUserProfileWithSkills($conn, $userId, $user_name, $bio, $selected_skills, $profile_pic_path);
         $success = true;
-        $user = getUserById($conn, $userId);
+        $user = getUserById($conn, $userId); // Refresh user
     }
 }
+
+// Prepare display path for profile pic
+$profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
 ?>
 
 <link rel="stylesheet" href="../assets/css/layout.css">
@@ -59,27 +49,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
 <main class="profile-page">
 
-    <!-- HEADER -->
+    <!-- Profile Header -->
     <div class="profile-header">
         <div class="avatar-large">
-            <?php if (!empty($user['profile_pic'])): ?>
-                <img src="<?= htmlspecialchars($user['profile_pic']) ?>" alt="avatar">
+            <?php if ($profilePic): ?>
+                <img src="<?= htmlspecialchars($profilePic) ?>" alt="avatar" class="profile-pic">
             <?php else: ?>
-                <div class="avatar-placeholder"><?= strtoupper(substr($user['full_name'], 0, 1)) ?></div>
+                <div class="avatar-placeholder"><?= strtoupper(substr($user['user_name'], 0, 1)) ?></div>
             <?php endif; ?>
         </div>
         <div class="profile-summary">
-            <h1><?= htmlspecialchars($user['full_name']) ?></h1>
+            <h1><?= htmlspecialchars($user['user_name']) ?></h1>
             <p class="role"><?= htmlspecialchars($roleLabel) ?></p>
-            <p class="joined-date">Joined <?= htmlspecialchars(date('F j, Y', strtotime($user['created_at']))) ?></p>
-            <button id="toggleEditForm" class="btn edit-btn">Edit Profile</button>
+            <p class="joined-date">Joined <?= date('F j, Y', strtotime($user['created_at'])) ?></p>
         </div>
     </div>
 
-    <!-- CONTENT -->
     <div class="profile-content">
-
-        <!-- LEFT: Skills & Bio -->
+        <!-- Left Panel -->
         <aside class="profile-card">
             <div class="section">
                 <h3><?= $skillsLabel ?></h3>
@@ -87,11 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                     <?php if (!empty($user['skills'])): ?>
                         <?php foreach ($user['skills'] as $sid):
                             $skillName = null;
-                            foreach ($allSkills as $s) {
-                                if ($s['skill_id'] == $sid) {
-                                    $skillName = $s['skill_name'];
-                                    break;
-                                }
+                            foreach ($allSkills as $s) if ($s['skill_id'] == $sid) {
+                                $skillName = $s['skill_name'];
+                                break;
                             }
                         ?>
                             <li><?= htmlspecialchars($skillName ?? '—') ?></li>
@@ -107,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
             </div>
         </aside>
 
-        <!-- RIGHT: Form -->
-        <section id="profileFormSection" class="profile-form panel">
+        <!-- Right Panel: Form -->
+        <section class="profile-form panel">
             <h2>Update Your Profile</h2>
 
             <?php if ($errors): ?>
@@ -123,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
             <form method="post" id="profileForm" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="full_name">Full Name</label>
-                    <input id="full_name" name="full_name" type="text" value="<?= htmlspecialchars($user['full_name']) ?>" readonly>
+                    <label for="user_name">Full Name</label>
+                    <input id="user_name" name="user_name" type="text" value="<?= htmlspecialchars($user['user_name']) ?>">
                 </div>
 
                 <div class="form-group">
@@ -134,30 +119,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
                 <div class="form-group">
                     <label for="profile_pic">Profile Picture</label>
-                    <input type="file" id="profile_pic" name="profile_pic" accept="image/*" disabled>
+                    <input type="file" id="profile_pic" name="profile_pic" accept="image/*">
                 </div>
-
-                <fieldset class="role-field">
-                    <legend>Role</legend>
-                    <label class="radio-inline">
-                        <input type="radio" name="role" value="learner" <?= $isLearner ? 'checked' : '' ?> disabled> Learner
-                    </label>
-                    <label class="radio-inline">
-                        <input type="radio" name="role" value="teacher" <?= !$isLearner && $userRole === 'teacher' ? 'checked' : '' ?> disabled> Teacher
-                    </label>
-                    <label class="radio-inline">
-                        <input type="radio" name="role" value="admin" <?= $userRole === 'admin' ? 'checked' : '' ?> disabled> Admin
-                    </label>
-                </fieldset>
 
                 <div class="form-group">
                     <label for="bio">Bio</label>
-                    <textarea id="bio" name="bio" readonly><?= htmlspecialchars($user['bio'] ?: 'Not added yet') ?></textarea>
+                    <textarea id="bio" name="bio"><?= htmlspecialchars($user['bio'] ?: '') ?></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="skills">Skills <small>(pick at least 2)</small></label>
-                    <select id="skills" name="skills[]" multiple disabled>
+                    <select id="skills" name="skills[]" multiple>
                         <?php foreach ($allSkills as $s): ?>
                             <option value="<?= $s['skill_id'] ?>" <?= in_array($s['skill_id'], $user['skills']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($s['skill_name']) ?>
@@ -166,58 +138,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label>Role</label>
+                    <input type="text" value="<?= htmlspecialchars($roleLabel) ?>" readonly>
+                </div>
+
                 <div class="form-actions">
-                    <button type="submit" name="update_profile" class="btn primary" disabled>Update Profile</button>
+                    <button type="submit" name="update_profile" class="btn primary">Update Profile</button>
                 </div>
             </form>
         </section>
-
     </div>
 </main>
 
 <script>
-    // Toggle edit form
-    document.getElementById('toggleEditForm').addEventListener('click', function() {
-        const form = document.getElementById('profileFormSection');
-        const inputs = form.querySelectorAll('input, textarea, select, button');
-        inputs.forEach(el => {
-            if (el.tagName !== 'BUTTON' || el.name === 'update_profile') {
-                el.readOnly = !el.readOnly;
-                el.disabled = !el.disabled;
-            }
-        });
-        form.querySelector('button[name="update_profile"]').disabled = !form.querySelector('button[name="update_profile"]').disabled;
-    });
+    // Live preview for profile picture
+    const avatarWrapper = document.querySelector('.avatar-large');
+    const avatarImg = avatarWrapper.querySelector('img.profile-pic');
+    const avatarPlaceholder = avatarWrapper.querySelector('.avatar-placeholder');
 
-    // Profile picture preview
-    const avatarImg = document.querySelector('.avatar-large img');
-    const avatarPlaceholder = document.querySelector('.avatar-placeholder');
-
-    document.getElementById('profile_pic')?.addEventListener('change', function(e) {
+    document.getElementById('profile_pic')?.addEventListener('change', e => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                if (avatarImg) {
-                    avatarImg.src = ev.target.result;
-                } else if (avatarPlaceholder) {
-                    avatarPlaceholder.style.display = 'none';
-                    const img = document.createElement('img');
-                    img.src = ev.target.result;
-                    img.style.width = '130px';
-                    img.style.height = '130px';
-                    img.style.borderRadius = '50%';
-                    img.style.objectFit = 'cover';
-                    img.style.border = '3px solid #ccc';
-                    document.querySelector('.avatar-large').appendChild(img);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = ev => {
+            if (avatarImg) avatarImg.src = ev.target.result;
+            else {
+                if (avatarPlaceholder) avatarPlaceholder.style.display = 'none';
+                const img = document.createElement('img');
+                img.src = ev.target.result;
+                img.className = 'profile-pic';
+                avatarWrapper.appendChild(img);
+            }
+        };
+        reader.readAsDataURL(file);
     });
 
-    // Minimum 2 skills validation
-    document.getElementById('profileForm').addEventListener('submit', function(e) {
+    // Ensure at least 2 skills selected
+    document.getElementById('profileForm').addEventListener('submit', e => {
         const selected = [...document.getElementById('skills').options].filter(o => o.selected);
         if (selected.length < 2) {
             e.preventDefault();

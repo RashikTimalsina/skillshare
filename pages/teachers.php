@@ -20,9 +20,9 @@ $search = $_GET['search'] ?? '';
 $sort = $_GET['sort'] ?? 'ASC';
 $sort = strtoupper($sort) === 'DESC' ? 'DESC' : 'ASC'; // default ASC
 
-$sql = "SELECT user_id, full_name, email, role FROM users 
-        WHERE full_name LIKE ? 
-        ORDER BY full_name $sort";
+$sql = "SELECT user_id, user_name, email, role FROM users 
+        WHERE user_name LIKE ? 
+        ORDER BY user_name $sort";
 
 $stmt = $conn->prepare($sql);
 $searchParam = "%$search%";
@@ -40,7 +40,7 @@ $result = $stmt->get_result();
 
     <!-- Search & Sort -->
     <form method="GET" class="search-sort-form">
-        <input type="text" name="search" placeholder="Search by fullname" value="<?= htmlspecialchars($search) ?>">
+        <input type="text" name="search" placeholder="Search by Username" value="<?= htmlspecialchars($search) ?>">
         <select name="sort">
             <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>A → Z</option>
             <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>>Z → A</option>
@@ -53,7 +53,7 @@ $result = $stmt->get_result();
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Fullname</th>
+                <th>Username</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -65,7 +65,7 @@ $result = $stmt->get_result();
                 <?php while ($row = $result->fetch_assoc()): ?>
                     <tr>
                         <td><?= $row['user_id'] ?></td>
-                        <td><?= htmlspecialchars($row['full_name']) ?></td>
+                        <td><?= htmlspecialchars($row['user_name']) ?></td>
                         <td><?= htmlspecialchars($row['email']) ?></td>
                         <td><?= $row['role'] ?></td>
                         <?php if ($role === 'admin'): ?>

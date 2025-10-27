@@ -1,0 +1,50 @@
+# ==================== ENABLE REWRITE ====================
+RewriteEngine On
+RewriteBase /
+
+# ==================== PREVENT DIRECTORY LISTING ====================
+Options -Indexes
+
+# ==================== SECURE SENSITIVE FILES ====================
+<FilesMatch "(config\.php|functions\.php|.*\.sql)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ==================== DYNAMIC ROUTING FOR PAGES ====================
+# If the requested file or directory exists, serve it directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Map /dashboard/* to dashboard/*.php
+RewriteRule ^dashboard/([a-zA-Z0-9_-]+)/?$ /dashboard/$1_dashboard.php [L,QSA]
+
+# Map /messages to pages/messages.php
+RewriteRule ^messages/?$ /pages/messages.php [L,QSA]
+
+# Map /auth/* to auth/*.php
+RewriteRule ^auth/([a-zA-Z0-9_-]+)/?$ /auth/$1.php [L,QSA]
+
+# Map any other /pagename to pages/pagename.php
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ /pages/$1.php [L,QSA]
+
+# ==================== ROOT FILES ====================
+RewriteRule ^index/?$ /index.php [L,QSA]
+
+# ==================== CUSTOM ERROR PAGES ====================
+ErrorDocument 404 /unauthorized.php
+ErrorDocument 403 /unauthorized.php
+
+# ==================== CACHE FOR STATIC FILES ====================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# ==================== OPTIONAL: FORCE HTTPS ====================
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

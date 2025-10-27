@@ -17,16 +17,16 @@ $role = $_SESSION['user_role'];
 
 // --- Handle Add User ---
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
-    $fullname = $_POST['full_name'];
+    $username = $_POST['user_name'];
     $email = $_POST['email'];
     $user_role = $_POST['role'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    $stmt = $conn->prepare("INSERT INTO users (full_name, email, role, password) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $fullname, $email, $user_role, $password);
+    $stmt = $conn->prepare("INSERT INTO users (user_name, email, role, password) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssss", $username, $email, $user_role, $password);
     $stmt->execute();
 
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Added new user: $fullname ($user_role)");
+    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Added new user: $username ($user_role)");
     header("Location: users.php");
     exit();
 }
@@ -34,15 +34,15 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
 // --- Handle Edit User ---
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $user_id = $_POST['user_id'];
-    $fullname = $_POST['full_name'];
+    $username = $_POST['user_name'];
     $email = $_POST['email'];
     $user_role = $_POST['role'];
 
-    $stmt = $conn->prepare("UPDATE users SET full_name=?, email=?, role=? WHERE user_id=?");
-    $stmt->bind_param("sssi", $fullname, $email, $user_role, $user_id);
+    $stmt = $conn->prepare("UPDATE users SET user_name=?, email=?, role=? WHERE user_id=?");
+    $stmt->bind_param("sssi", $username, $email, $user_role, $user_id);
     $stmt->execute();
 
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Edited user ID $user_id: $fullname ($user_role)");
+    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Edited user ID $user_id: $username ($user_role)");
     header("Location: users.php");
     exit();
 }
@@ -51,14 +51,14 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $user_id = $_POST['user_id'];
 
-    $delUserRes = $conn->query("SELECT full_name, role FROM users WHERE user_id=$user_id");
+    $delUserRes = $conn->query("SELECT user_name, role FROM users WHERE user_id=$user_id");
     $delUser = $delUserRes->fetch_assoc();
 
     $stmt = $conn->prepare("DELETE FROM users WHERE user_id=?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
 
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Deleted user ID $user_id: {$delUser['full_name']} ({$delUser['role']})");
+    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Deleted user ID $user_id: {$delUser['user_name']} ({$delUser['role']})");
     header("Location: users.php");
     exit();
 }
@@ -68,9 +68,9 @@ $search = $_GET['search'] ?? '';
 $sort = strtoupper($_GET['sort'] ?? 'ASC');
 $sort = $sort === 'DESC' ? 'DESC' : 'ASC';
 
-$sql = "SELECT user_id, full_name, email, role 
+$sql = "SELECT user_id, user_name, email, role 
         FROM users 
-        WHERE CAST(user_id AS CHAR) LIKE ? OR full_name LIKE ?
+        WHERE CAST(user_id AS CHAR) LIKE ? OR user_name LIKE ?
         ORDER BY user_id $sort";
 
 $stmt = $conn->prepare($sql);
@@ -106,7 +106,7 @@ if ($edit_user_id) {
             <!-- Search & Sort -->
             <div class="search-sort-container">
                 <form method="GET" class="search-sort-form">
-                    <input class="search-input" type="text" name="search" placeholder="Search by ID or Fullname" value="<?= htmlspecialchars($search) ?>">
+                    <input class="search-input" type="text" name="search" placeholder="Search by ID or Name" value="<?= htmlspecialchars($search) ?>">
                     <select class="sort-select" name="sort">
                         <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>1 →</option>
                         <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>><- 1</option>
@@ -138,9 +138,9 @@ if ($edit_user_id) {
                                         <td>
                                             <?php if ($role === 'admin' && $edit_user_id == $row['user_id']): ?>
                                                 <input type="hidden" name="user_id" value="<?= $row['user_id'] ?>">
-                                                <input type="text" name="full_name" value="<?= htmlspecialchars($row['full_name']) ?>" required>
+                                                <input type="text" name="user_name" value="<?= htmlspecialchars($row['user_name']) ?>" required>
                                             <?php else: ?>
-                                                <?= htmlspecialchars($row['full_name']) ?>
+                                                <?= htmlspecialchars($row['user_name']) ?>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -210,7 +210,7 @@ if ($edit_user_id) {
 
                         newRow.innerHTML = `
                             <td>New</td>
-                            <td><input type="text" name="full_name" placeholder="Full Name" required></td>
+                            <td><input type="text" name="user_name" placeholder="Full Name" required></td>
                             <td><input type="email" name="email" placeholder="Email" required></td>
                             <td>
                                 <select name="role" required>
