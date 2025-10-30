@@ -24,6 +24,11 @@
         <?php endif; ?>
     </ul>
     <ul class="bottom-links">
-        <li><a href="../auth/logout.php">Logout</a></li>
+        <li>
+            <a href="../auth/logout.php"
+                onclick="return confirm('Are you sure you want to logout?');">
+                Logout
+            </a>
+        </li>
     </ul>
 </aside>
