@@ -24,6 +24,6 @@
         <?php endif; ?>
     </ul>
     <ul class="bottom-links">
-        <li><a href="../pages/logout.php">Logout</a></li>
+        <li><a href="../auth/logout.php">Logout</a></li>
     </ul>
 </aside>

@@ -1,13 +1,22 @@
 <?php
-// index.php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
+require_once 'includes/config.php';
 
 // Force logout if coming back from a dashboard
 if (isset($_SESSION['user_id'])) {
     session_unset();
     session_destroy();
 }
+
+// Fetch top 4 trending skills
+$query = "SELECT skill_name, description FROM skills ORDER BY created_at DESC LIMIT 4";
+$result = mysqli_query($conn, $query);
 ?>
+
 <!doctype html>
 <html lang="en">
 
@@ -15,65 +24,53 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>SkillShare - Learn, Teach & Share</title>
-    
-    <link rel="stylesheet" href="assets/css/style.css">
-    
-
+    <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 
 <body>
-    <div class="topbar">
+    <!-- ===== TOPBAR ===== -->
+    <header class="topbar">
         <div class="brand">SkillShare</div>
-        <div class="nav">
-            <a href="auth/signup.php">Signup</a>
-            <a href="auth/login.php">Login</a>
-        </div>
-    </div>
+        <nav class="nav">
+            <a href="auth/signup.php" style="color:var(--primary)"><b>Signup</b></a>
+            <a href="auth/login.php" style="color:var(--primary)"><b>Login</b></a>
+        </nav>
+    </header>
 
+    <!-- ===== MAIN CONTENT ===== -->
     <main class="container">
         <section class="hero">
             <div class="hero-left">
-                <h1>Learn, Teach and <br>
-                    Share Skills Easily</h1>
-                <p>Connect with learners and teachers from around the world</p>
+                <h1>Learn, Teach and<br>Share Skills Easily</h1>
+                <p>Join thousands of learners and teachers worldwide</p>
                 <div class="cta-row">
                     <a class="btn" href="pages/browse_skills.php">Explore Skills</a>
-                    <a class="btn" href="auth/signup.php">SignUp</a>
+                    <a class="btn" href="auth/signup.php">Sign Up</a>
                 </div>
             </div>
-            <div class="placeholder-media">Hero image / illustration</div>
-        </section>
-
-        <section class="section">
-            <h2>Why Choose Us?</h2>
-            <div class="cards" style="margin-top:24px">
-                <div class="feature">Easy Skill Sharing</div>
-                <div class="feature">Connect with experts</div>
-                <div class="feature">Learn at your pace</div>
-                <div class="feature">Track Your Progress</div>
+            <div class="placeholder-media">
+                <img src="assets/images/hero.png" alt="SkillShare Hero Image">
             </div>
         </section>
 
         <section class="section">
-            <h2>How It Works ?</h2>
+            <h2>Trending Skills</h2>
             <div class="cards" style="margin-top:24px">
-                <div class="feature">Signup and create profile</div>
-                <div class="feature">Browse and enroll in skills</div>
-                <div class="feature">Learn or Teach Online</div>
-                <div class="feature">Track through Progress</div>
-            </div>
-
-            <div style="text-align:center;margin-top:48px">
-                <a class="btn" href="pages/browse_skills.php">Learn More</a>
+                <?php while ($skill = mysqli_fetch_assoc($result)): ?>
+                    <div class="feature">
+                        <h3><?= htmlspecialchars($skill['skill_name']) ?></h3>
+                        <p><?= htmlspecialchars(substr($skill['description'], 0, 80)) ?>...</p>
+                    </div>
+                <?php endwhile; ?>
             </div>
         </section>
+        <!-- <div style="text-align:center;margin-top:80px"> <a class="btn" href="auth/signup.php">Get Started</a> </div> -->
     </main>
 
-    <div class="footer">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Contact</a>
-        <a href="#">Terms</a>
-    </div>
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        © 2025 SkillShare System. All rights reserved.
+    </footer>
 </body>
 
 </html>

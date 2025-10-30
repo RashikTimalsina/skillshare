@@ -5,24 +5,34 @@ include('../middlewares/session_check.php');
 include('../middlewares/role_check.php');
 checkRole('admin');
 
-// Fetch last 10 activities
-$limit = 10;
-$user_id = $_SESSION['user_id'];
-$result = mysqli_query($conn, "
-    SELECT created_at, action
-    FROM activities
-    WHERE user_id = '$user_id'
-    ORDER BY created_at DESC
-    LIMIT $limit
-");
+// ====================== DASHBOARD OVERVIEW COUNTS ======================
+$cards = [
+    'Total Users' => "SELECT COUNT(*) as total FROM users",
+    'Total Learners' => "SELECT COUNT(*) as total FROM users WHERE role='learner'",
+    'Total Teachers' => "SELECT COUNT(*) as total FROM users WHERE role='teacher'",
+    'Total Skills' => "SELECT COUNT(*) as total FROM skills",
+];
 
-$recent_activities = [];
-if ($result && mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $recent_activities[] = $row;
-    }
+// Fetch counts
+$cardCounts = [];
+foreach ($cards as $title => $query) {
+    $res = mysqli_query($conn, $query);
+    $cardCounts[$title] = mysqli_fetch_assoc($res)['total'] ?? 0;
 }
+
+// Fetch recent activities
+$activitiesQuery = "SELECT username, action, created_at FROM activities ORDER BY created_at DESC LIMIT 8";
+$activitiesRes = mysqli_query($conn, $activitiesQuery);
+
+// Dummy statistics data (can later be dynamic)
+$stats = [
+    'Active Users' => 128,
+    'Completed Courses' => 54,
+    'Pending Feedbacks' => 23,
+    'New Registrations' => 12
+];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -37,52 +47,70 @@ if ($result && mysqli_num_rows($result) > 0) {
 <body>
     <div class="layout-wrapper">
         <?php include('../includes/layouts/sidebar.php'); ?>
-
         <div class="main-content-wrapper">
             <?php include('../includes/layouts/topbar.php'); ?>
-
             <main class="main-content">
+
                 <!-- DASHBOARD OVERVIEW -->
                 <section class="dashboard-overview">
                     <?php
-                    $cards = [
-                        'Total Users' => "SELECT COUNT(*) as total FROM users",
-                        'Total Learners' => "SELECT COUNT(*) as total FROM users WHERE role='learner'",
-                        'Total Teachers' => "SELECT COUNT(*) as total FROM users WHERE role='teacher'",
-                        'Total Skills' => "SELECT COUNT(*) as total FROM skills",
-                    ];
-                    foreach ($cards as $title => $query) {
-                        $res = mysqli_query($conn, $query);
-                        $count = mysqli_fetch_assoc($res)['total'];
-                        echo "<div class='card'><h3>$title</h3><p>$count</p></div>";
-                    }
+                    $colors = ['#007bff', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14'];
+                    $i = 0;
+                    foreach ($cardCounts as $title => $count):
+                        $color = $colors[$i % count($colors)];
+                    ?>
+                        <div class='card' style='border-top: 5px solid <?= $color ?>;'>
+                            <h3><?= $title ?></h3>
+                            <p><?= $count ?></p>
+                        </div>
+                    <?php
+                        $i++;
+                    endforeach;
                     ?>
                 </section>
 
-                <!-- RECENT ACTIVITIES -->
-                <section class="recent-activities">
-                    <h2>Recent Activities</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Activity</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activities-tbody">
-                            <?php foreach ($recent_activities as $i => $act): ?>
-                                <tr class="activity-row" style="<?= $i >= 5 ? 'display:none;' : '' ?>">
-                                    <td><?= date('d M Y, H:i', strtotime($act['created_at'])) ?></td>
-                                    <td><?= htmlspecialchars($act['action']) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                            <?php if (empty($recent_activities)) echo "<tr><td colspan='2'>No recent activities</td></tr>"; ?>
-                        </tbody>
-                    </table>
-                    <button id="show-more-btn">Show More</button>
-                </section>
+                <!-- MIDDLE SECTION -->
+                <div class="dashboard-middle">
+
+                    <!-- Activities Section -->
+                    <section class="activities-section">
+                        <h3 style="margin-bottom: 0.75rem; color: #333;">Recent Activities</h3>
+                        <div class="activity-feed">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php while ($row = mysqli_fetch_assoc($activitiesRes)): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($row['username']) ?></td>
+                                            <td><?= htmlspecialchars($row['action']) ?></td>
+                                            <td><?= date('Y-m-d H:i', strtotime($row['created_at'])) ?></td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Statistics Section -->
+                    <section class="statistics-section">
+                        <h3 style="margin-bottom: 0.75rem; color: #333;">Statistics</h3>
+                        <?php foreach ($stats as $title => $value): ?>
+                            <div class="stat-card">
+                                <?= $title ?>: <strong><?= $value ?></strong>
+                            </div>
+                        <?php endforeach; ?>
+                    </section>
+
+                </div>
 
                 <!-- QUICK ACTIONS -->
+                <h3 style="margin-bottom: 0.0rem; color: #333;">Quick Actions</h3>
                 <section class="quick-actions">
                     <div class="action-card" onclick="window.location.href='../pages/users.php'">
                         <h3>Manage Users</h3>
@@ -101,31 +129,13 @@ if ($result && mysqli_num_rows($result) > 0) {
                         <p>Review feedback from learners</p>
                     </div>
                 </section>
-            </main>
 
+            </main>
             <?php include('../includes/layouts/footer.php'); ?>
         </div>
     </div>
 
     <script src="../assets/js/layout.js" defer></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const rows = document.querySelectorAll('.activity-row');
-            const btn = document.getElementById('show-more-btn');
-            let visibleCount = 5;
-
-            btn.style.display = rows.length > visibleCount ? 'inline-block' : 'none';
-
-            btn.addEventListener('click', () => {
-                const nextCount = visibleCount + 5;
-                rows.forEach((row, index) => {
-                    if (index < nextCount) row.style.display = '';
-                });
-                visibleCount = nextCount;
-                if (visibleCount >= rows.length) btn.style.display = 'none';
-            });
-        });
-    </script>
 </body>
 
 </html>

@@ -9,64 +9,70 @@ include('../middlewares/session_check.php');
 include('../middlewares/role_check.php');
 checkRole('teacher');
 
+// ==============================
+// Include Models
+// ==============================
+require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/Teacher.php';
+require_once __DIR__ . '/../models/Enrollment.php';
+require_once __DIR__ . '/../models/Certificate.php';
+require_once __DIR__ . '/../models/Feedback.php';
+require_once __DIR__ . '/../models/Activity.php';
+require_once __DIR__ . '/../models/Skill.php';
+require_once __DIR__ . '/../models/Category.php';
+
+// ==============================
+// Teacher Info
+// ==============================
 $teacher_user_id = $_SESSION['user_id'];
-$user_role = $_SESSION['user_role'];
+$teacher = User::getById($conn, $teacher_user_id);
+$user_name = $teacher->full_name ?? 'Unknown User';
 
-// Ensure user_name is available
-$user_name = $_SESSION['user_name'] ?? null;
-
-if (!$user_name) {
-    $res = mysqli_query($conn, "SELECT user_name FROM users WHERE user_id = '$teacher_user_id'");
-    $row = mysqli_fetch_assoc($res);
-    $user_name = $row['user_name'] ?? 'Unknown User';
-}
-
-// Log dashboard visit only once per session
+// Log dashboard visit once
 if (!isset($_SESSION['teacher_dashboard_visited'])) {
-    logActivity($conn, $teacher_user_id, $user_name, "Visited Teacher Dashboard");
+    Activity::log($conn, $teacher_user_id, $user_name, "Visited Teacher Dashboard");
     $_SESSION['teacher_dashboard_visited'] = true;
 }
 
-// Fetch skills taught by this teacher
-$skill_query = "
-    SELECT skill_id 
-    FROM skills s
-    JOIN teachers t ON t.skills_skill_id = s.skill_id
-    WHERE t.users_user_id = '$teacher_user_id'
-";
-$skills_res = mysqli_query($conn, $skill_query);
-$skill_ids = [];
-while ($row = mysqli_fetch_assoc($skills_res)) {
-    $skill_ids[] = $row['skill_id'];
+// ==============================
+// Fetch Teacher Skills & Enrollments
+// ==============================
+$teacher_skills = Teacher::getAllByUserId($conn, $teacher_user_id);
+$skill_ids = array_map(fn($t) => $t->skills_skill_id, $teacher_skills);
+
+// Cards data
+$skills_offered = count($teacher_skills);
+
+$enrollments = [];
+foreach ($skill_ids as $sid) {
+    $enrollments = array_merge($enrollments, Enrollment::getAllBySkillId($conn, $sid));
 }
-$skill_ids_str = $skill_ids ? implode(',', $skill_ids) : '0';
+$active_enrollments = count(array_filter($enrollments, fn($e) => $e->status === 'enrolled'));
+$completed_enrollments = count(array_filter($enrollments, fn($e) => $e->status === 'completed'));
+
+$feedbacks = [];
+foreach ($skill_ids as $sid) {
+    $feedbacks = array_merge($feedbacks, Feedback::getBySkillId($conn, $sid));
+}
+$pending_feedbacks = count(array_filter($feedbacks, fn($f) => $f->feedback_given === 'no'));
 
 // Dashboard cards
 $cards = [
-    'Total Skills' => "SELECT COUNT(*) AS total FROM teachers WHERE users_user_id = '$teacher_user_id'",
-    'Active Enrollments' => "SELECT COUNT(*) AS total FROM enrollments WHERE skills_skill_id IN ($skill_ids_str) AND status='enrolled'",
-    'Completed Enrollments' => "SELECT COUNT(*) AS total FROM enrollments WHERE skills_skill_id IN ($skill_ids_str) AND status='completed'",
-    'Pending Feedbacks' => "SELECT COUNT(*) AS total FROM feedback WHERE skills_skill_id IN ($skill_ids_str) AND feedback_given='no'",
+    ['title' => 'Skills Offered', 'count' => $skills_offered, 'icon' => 'fa-chalkboard-teacher', 'color' => '#4e73df'],
+    ['title' => 'Active Enrollments', 'count' => $active_enrollments, 'icon' => 'fa-user-graduate', 'color' => '#1cc88a'],
+    ['title' => 'Completed Enrollments', 'count' => $completed_enrollments, 'icon' => 'fa-check-circle', 'color' => '#36b9cc'],
+    ['title' => 'Pending Feedbacks', 'count' => $pending_feedbacks, 'icon' => 'fa-comments', 'color' => '#f6c23e'],
 ];
 
-// Recent activities (last 10)
-$activities_query = "
-    SELECT a.created_at, a.action, a.username AS learner_name
-    FROM activities a
-    JOIN user_skills us ON us.user_id = a.user_id
-    WHERE us.skill_id IN ($skill_ids_str)
-    ORDER BY a.created_at DESC
-    LIMIT 10
-";
-$activities_res = mysqli_query($conn, $activities_query);
+// Recent activities
 $recent_activities = [];
-if ($activities_res && mysqli_num_rows($activities_res) > 0) {
-    while ($row = mysqli_fetch_assoc($activities_res)) {
-        $recent_activities[] = $row;
-    }
+foreach ($skill_ids as $sid) {
+    $recent_activities = array_merge($recent_activities, Activity::getRecentBySkillId($conn, $sid, 10));
 }
-?>
+usort($recent_activities, fn($a, $b) => strtotime($b->created_at) - strtotime($a->created_at));
+$recent_activities = array_slice($recent_activities, 0, 10);
 
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -76,6 +82,7 @@ if ($activities_res && mysqli_num_rows($activities_res) > 0) {
     <title>Teacher Dashboard | SkillShare</title>
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body>
@@ -83,96 +90,66 @@ if ($activities_res && mysqli_num_rows($activities_res) > 0) {
         <?php include('../includes/layouts/sidebar.php'); ?>
         <div class="main-content-wrapper">
             <?php include('../includes/layouts/topbar.php'); ?>
-
             <main class="main-content">
+
                 <!-- DASHBOARD CARDS -->
                 <section class="dashboard-overview">
-                    <?php
-                    foreach ($cards as $title => $query) {
-                        $res = mysqli_query($conn, $query);
-                        $count = ($res && mysqli_num_rows($res) > 0) ? mysqli_fetch_assoc($res)['total'] : 0;
-                        echo "<div class='card'><h3>$title</h3><p>$count</p></div>";
-                    }
-                    ?>
+                    <?php foreach ($cards as $card): ?>
+                        <div class="card" style="border-left:5px solid <?= $card['color'] ?>">
+                            <i class="fas <?= $card['icon'] ?> card-icon" style="font-size:2rem; margin-bottom:10px; color:<?= $card['color'] ?>"></i>
+                            <h3><?= $card['title'] ?></h3>
+                            <p><?= $card['count'] ?></p>
+                        </div>
+                    <?php endforeach; ?>
                 </section>
 
                 <!-- RECENT ACTIVITIES -->
                 <section class="recent-activities">
                     <h2>Recent Activities</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Activity</th>
-                                <th>Learner</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            if (!empty($recent_activities)) {
-                                foreach ($recent_activities as $i => $act) {
-                                    $hide = $i >= 5 ? 'display:none;' : '';
-                                    echo "<tr class='activity-row' style='$hide'>
-                                        <td>" . date('d M Y, H:i', strtotime($act['created_at'])) . "</td>
-                                        <td>" . htmlspecialchars($act['action']) . "</td>
-                                        <td>" . htmlspecialchars($act['learner_name']) . "</td>
-                                      </tr>";
-                                }
-                            } else {
-                                echo "<tr><td colspan='3' style='text-align:center;'>No recent activities</td></tr>";
-                            }
-                            ?>
-                        </tbody>
-                    </table>
-                    <div style="text-align:center;">
-                        <button id="show-more-btn" style="display:<?= count($recent_activities) > 5 ? 'inline-block' : 'none' ?>;">Show More</button>
+                    <div class="activity-feed">
+                        <?php if (!empty($recent_activities)): ?>
+                            <?php foreach ($recent_activities as $act): ?>
+                                <div class="activity-item">
+                                    <span class="activity-time"><?= date('d M Y, H:i', strtotime($act->created_at)) ?></span>
+                                    <span class="activity-action"><?= htmlspecialchars($act->action) ?></span>
+                                    <span class="activity-user"><?= htmlspecialchars($act->username ?? 'N/A') ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p style="text-align:center;">No recent activities</p>
+                        <?php endif; ?>
                     </div>
                 </section>
 
                 <!-- QUICK ACTIONS -->
                 <section class="quick-actions">
                     <div class="action-card" onclick="window.location.href='../pages/skills.php'">
+                        <i class="fas fa-chalkboard-teacher fa-2x" style="margin-bottom:10px; color:#4e73df;"></i>
                         <h3>My Skills</h3>
                         <p>View your uploaded skills</p>
                     </div>
                     <div class="action-card" onclick="window.location.href='../pages/enrollments.php'">
+                        <i class="fas fa-user-graduate fa-2x" style="margin-bottom:10px; color:#1cc88a;"></i>
                         <h3>Enrollments</h3>
                         <p>Manage learner enrollments</p>
                     </div>
                     <div class="action-card" onclick="window.location.href='../pages/feedbacks.php'">
+                        <i class="fas fa-comments fa-2x" style="margin-bottom:10px; color:#f6c23e;"></i>
                         <h3>Feedbacks</h3>
                         <p>View feedbacks from learners</p>
                     </div>
                     <div class="action-card" onclick="window.location.href='../pages/certificates.php'">
+                        <i class="fas fa-certificate fa-2x" style="margin-bottom:10px; color:#36b9cc;"></i>
                         <h3>Certificates</h3>
                         <p>Manage and issue course certificates</p>
                     </div>
                 </section>
             </main>
-
             <?php include('../includes/layouts/footer.php'); ?>
         </div>
     </div>
 
     <script src="../assets/js/layout.js" defer></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const rows = document.querySelectorAll('.activity-row');
-            const btn = document.getElementById('show-more-btn');
-            let visibleCount = 5;
-
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    const nextCount = visibleCount + 5;
-                    rows.forEach((row, index) => {
-                        if (index < nextCount) row.style.display = '';
-                    });
-                    visibleCount = nextCount;
-                    if (visibleCount >= rows.length) btn.style.display = 'none';
-                });
-            }
-        });
-    </script>
 </body>
 
 </html>

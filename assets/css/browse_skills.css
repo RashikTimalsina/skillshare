@@ -1,0 +1,195 @@
+/* ===================== BROWSE SKILLS PAGE ===================== */
+
+/* Layout container */
+.browse-skills-container {
+  max-width: 1200px;
+  margin: 100px auto 100px; /* top and bottom spacing to avoid fixed topbar/footer overlap */
+  padding: 0 24px;
+}
+
+/* Title */
+.browse-skills-container h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+/* Grid Layout */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+/* Card */
+.skill-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Thumbnail */
+.skill-card .thumb {
+  height: 90px;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e4e4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #666;
+}
+
+/* Meta content */
+.skill-card .meta {
+  padding: 18px;
+  flex: 1 1 auto;
+}
+
+/* Skill name */
+.skill-card .meta strong {
+  display: block;
+  font-weight: 700;
+  font-size: 18px;
+  color: #222;
+  margin-bottom: 10px;
+}
+
+/* Description */
+.skill-card .meta p {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Hover effects */
+.skill-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Enroll button inside card */
+.skill-card .enroll-form button.enroll-btn {
+  background: #007bff;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.skill-card .enroll-form button.enroll-btn:hover {
+  background: #0056b3;
+}
+
+/* Empty message */
+.no-skills {
+  text-align: center;
+  color: #777;
+  font-size: 16px;
+  margin-top: 40px;
+}
+
+/* Show More */
+.show-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}
+
+.show-more-btn {
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 6px;
+  color: #111;
+}
+
+.show-more-btn:hover {
+  color: #007bff;
+}
+
+/* Global Enroll button at bottom (optional) */
+.enroll-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.enroll-wrap a.enroll-btn {
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  padding: 14px 26px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  color: #111;
+  transition: all 0.15s ease;
+}
+
+.enroll-wrap a.enroll-btn:hover {
+  background: #111;
+  color: #fff;
+}
+
+/* ===================== FIXED TOPBAR & FOOTER ===================== */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .skills-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 900px) {
+  .skills-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .skills-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .browse-skills-container {
+    padding: 0 14px;
+  }
+}

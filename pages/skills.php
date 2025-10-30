@@ -71,6 +71,31 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
     exit();
 }
 
+// // --- Search & Sort ---
+// $search = $_GET['search'] ?? '';
+// $sort = strtoupper($_GET['sort'] ?? 'ASC');
+// $sort = $sort === 'DESC' ? 'DESC' : 'ASC';
+
+// $sql = "SELECT skill_id, skill_name
+//         FROM skills
+//         WHERE CAST(skill_id AS CHAR) LIKE ? OR skill_name LIKE ?
+//         ORDER BY skill_id $sort";
+
+// $stmt = $conn->prepare($sql);
+// $searchParam = "%$search%";
+// $stmt->bind_param("ss", $searchParam, $searchParam);
+// $stmt->execute();
+// $result = $stmt->get_result();
+
+// $edit_skill_id = $_GET['edit'] ?? null;
+// if ($edit_skill_id) {
+//     $edit_stmt = $conn->prepare("SELECT * FROM skills WHERE skill_id=?");
+//     $edit_stmt->bind_param("i", $edit_skill_id);
+//     $edit_stmt->execute();
+//     $edit_result = $edit_stmt->get_result()->fetch_assoc();
+// }
+
+
 // --- Fetch skills based on role ---
 if ($role === 'admin') {
     $skillsSql = "SELECT s.skill_id, s.skill_name, s.description, c.category_name, s.categories_category_id
@@ -112,8 +137,20 @@ $categories = $conn->query("SELECT category_id, category_name FROM categories OR
 
         <div class="main-content">
             <div class="page-header">
-                <h2>Skills</h2>
+                <h2>Skills Management</h2>
             </div>
+
+            <!-- Search & Sort
+            <div class="search-sort-container">
+                <form method="GET" class="search-sort-form">
+                    <input class="search-input" type="text" name="search" placeholder="Search by ID or Name" value="<?= htmlspecialchars($search) ?>">
+                    <select class="sort-select" name="sort">
+                        <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>1 →</option>
+                        <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>><- 1</option>
+                    </select>
+                    <button class="search-btn" type="submit">Apply</button>
+                </form>
+            </div> -->
 
             <div class="table-container">
                 <table class="users-table">

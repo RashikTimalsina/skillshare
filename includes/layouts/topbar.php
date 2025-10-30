@@ -14,9 +14,7 @@ if (isset($_SESSION['user_id'])) {
 ?>
 <header class="topbar">
     <div class="topbar-left">
-        <button class="hamburger" id="hamburger-btn">
-            ☰
-        </button>
+        <button class="hamburger" id="hamburger-btn">☰</button>
         <h1 class="dashboard-title">
             <?php
             if ($_SESSION['user_role'] === 'admin') echo 'Admin Dashboard';
@@ -28,7 +26,7 @@ if (isset($_SESSION['user_id'])) {
 
     <div class="topbar-right">
         <!-- Message Icon -->
-        <div class="icon-placeholder" style="position: relative;">
+        <div class="icon-placeholder">
             <a href="../pages/messages.php">💬</a>
             <?php if ($unread_count > 0): ?>
                 <span class="badge"><?= $unread_count ?></span>
@@ -37,7 +35,7 @@ if (isset($_SESSION['user_id'])) {
 
         <!-- Profile Icon -->
         <div class="icon-placeholder">
-            <a href="../pages/profile.php"> 👤</a>
+            <a href="../pages/profile.php">👤</a>
         </div>
     </div>
 </header>

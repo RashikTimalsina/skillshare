@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 $profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
 ?>
 
+
+
 <link rel="stylesheet" href="../assets/css/layout.css">
 <link rel="stylesheet" href="../assets/css/profile.css">
 
@@ -138,10 +140,10 @@ $profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
                     </select>
                 </div>
 
-                <div class="form-group">
+                <!-- <div class="form-group">
                     <label>Role</label>
                     <input type="text" value="<?= htmlspecialchars($roleLabel) ?>" readonly>
-                </div>
+                </div> -->
 
                 <div class="form-actions">
                     <button type="submit" name="update_profile" class="btn primary">Update Profile</button>
@@ -184,5 +186,3 @@ $profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
         }
     });
 </script>
-
-<?php require_once __DIR__ . '/../includes/layouts/footer.php'; ?>
