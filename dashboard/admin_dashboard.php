@@ -51,6 +51,11 @@ $stats = [
             <?php include('../includes/layouts/topbar.php'); ?>
             <main class="main-content">
 
+                <!-- USER GREETING -->
+                <h3 style="font-size: 1.5rem; color: #333; font-weight: 200; margin-top: 0rem; margin-bottom: 1rem;">
+                    Welcome Back, <?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?>!
+                </h3>
+
                 <!-- DASHBOARD OVERVIEW -->
                 <section class="dashboard-overview">
                     <?php
@@ -68,6 +73,7 @@ $stats = [
                     endforeach;
                     ?>
                 </section>
+
 
                 <!-- MIDDLE SECTION -->
                 <div class="dashboard-middle">

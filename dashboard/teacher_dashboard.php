@@ -90,12 +90,17 @@ $recent_activities = array_slice($recent_activities, 0, 10);
         <?php include('../includes/layouts/sidebar.php'); ?>
         <div class="main-content-wrapper">
             <?php include('../includes/layouts/topbar.php'); ?>
-            <main class="main-content">
+            <main id="teacher-dashboard-main">
+
+                <!-- USER GREETING -->
+                <h3 style="font-size: 1.5rem; color: #333; font-weight: 200; margin-top: 3.5rem; margin-bottom: 1rem;">
+                    Welcome Back, <?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?>!
+                </h3>
 
                 <!-- DASHBOARD CARDS -->
-                <section class="dashboard-overview">
+                <section class="teacher-overview-cards">
                     <?php foreach ($cards as $card): ?>
-                        <div class="card" style="border-left:5px solid <?= $card['color'] ?>">
+                        <div class="teacher-card" style="border-left:5px solid <?= $card['color'] ?>">
                             <i class="fas <?= $card['icon'] ?> card-icon" style="font-size:2rem; margin-bottom:10px; color:<?= $card['color'] ?>"></i>
                             <h3><?= $card['title'] ?></h3>
                             <p><?= $card['count'] ?></p>
@@ -103,47 +108,69 @@ $recent_activities = array_slice($recent_activities, 0, 10);
                     <?php endforeach; ?>
                 </section>
 
-                <!-- RECENT ACTIVITIES -->
-                <section class="recent-activities">
-                    <h2>Recent Activities</h2>
-                    <div class="activity-feed">
+                <!-- MIDDLE SECTION: ACTIVITIES + STATS -->
+                <section class="teacher-middle-section">
+                    <!-- Recent Activities -->
+                    <div class="teacher-activities">
+                        <h3>Recent Activities</h3>
                         <?php if (!empty($recent_activities)): ?>
-                            <?php foreach ($recent_activities as $act): ?>
-                                <div class="activity-item">
-                                    <span class="activity-time"><?= date('d M Y, H:i', strtotime($act->created_at)) ?></span>
-                                    <span class="activity-action"><?= htmlspecialchars($act->action) ?></span>
-                                    <span class="activity-user"><?= htmlspecialchars($act->username ?? 'N/A') ?></span>
-                                </div>
-                            <?php endforeach; ?>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Action</th>
+                                        <th>User</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recent_activities as $act): ?>
+                                        <tr>
+                                            <td><?= date('d M Y, H:i', strtotime($act->created_at)) ?></td>
+                                            <td><?= htmlspecialchars($act->action) ?></td>
+                                            <td><?= htmlspecialchars($act->username ?? 'N/A') ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         <?php else: ?>
                             <p style="text-align:center;">No recent activities</p>
                         <?php endif; ?>
                     </div>
+
+                    <!-- Statistics Section -->
+                    <div class="teacher-statistics">
+                        <h3>Statistics</h3>
+                        <div class="stat-card">Skills Offered: <?= $skills_offered ?></div>
+                        <div class="stat-card">Active Enrollments: <?= $active_enrollments ?></div>
+                        <div class="stat-card">Completed Enrollments: <?= $completed_enrollments ?></div>
+                        <div class="stat-card">Pending Feedbacks: <?= $pending_feedbacks ?></div>
+                    </div>
                 </section>
 
                 <!-- QUICK ACTIONS -->
-                <section class="quick-actions">
-                    <div class="action-card" onclick="window.location.href='../pages/skills.php'">
+                <section class="teacher-quick-actions">
+                    <div class="teacher-action-card" onclick="window.location.href='../pages/skills.php'">
                         <i class="fas fa-chalkboard-teacher fa-2x" style="margin-bottom:10px; color:#4e73df;"></i>
                         <h3>My Skills</h3>
                         <p>View your uploaded skills</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/enrollments.php'">
+                    <div class="teacher-action-card" onclick="window.location.href='../pages/enrollments.php'">
                         <i class="fas fa-user-graduate fa-2x" style="margin-bottom:10px; color:#1cc88a;"></i>
                         <h3>Enrollments</h3>
                         <p>Manage learner enrollments</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/feedbacks.php'">
+                    <div class="teacher-action-card" onclick="window.location.href='../pages/feedbacks.php'">
                         <i class="fas fa-comments fa-2x" style="margin-bottom:10px; color:#f6c23e;"></i>
                         <h3>Feedbacks</h3>
                         <p>View feedbacks from learners</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/certificates.php'">
+                    <div class="teacher-action-card" onclick="window.location.href='../pages/certificates.php'">
                         <i class="fas fa-certificate fa-2x" style="margin-bottom:10px; color:#36b9cc;"></i>
                         <h3>Certificates</h3>
                         <p>Manage and issue course certificates</p>
                     </div>
                 </section>
+
             </main>
             <?php include('../includes/layouts/footer.php'); ?>
         </div>

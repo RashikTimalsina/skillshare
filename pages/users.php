@@ -3,6 +3,7 @@ session_start();
 include('../includes/functions.php');
 include('../includes/config.php');
 include('../middlewares/session_check.php');
+require_once __DIR__ . '/../models/User.php';
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -17,16 +18,15 @@ $role = $_SESSION['user_role'];
 
 // --- Handle Add User ---
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
-    $username = $_POST['user_name'];
-    $email = $_POST['email'];
-    $user_role = $_POST['role'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $data = [
+        'user_name' => $_POST['user_name'],
+        'email' => $_POST['email'],
+        'role' => $_POST['role'],
+        'password' => password_hash($_POST['password'], PASSWORD_DEFAULT)
+    ];
 
-    $stmt = $conn->prepare("INSERT INTO users (user_name, email, role, password) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $username, $email, $user_role, $password);
-    $stmt->execute();
-
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Added new user: $username ($user_role)");
+    $newUserId = User::create($conn, $data);
+    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Added new user: {$data['user_name']} ({$data['role']})");
     header("Location: users.php");
     exit();
 }
@@ -34,15 +34,14 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
 // --- Handle Edit User ---
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
     $user_id = $_POST['user_id'];
-    $username = $_POST['user_name'];
-    $email = $_POST['email'];
-    $user_role = $_POST['role'];
+    $data = [
+        'user_name' => $_POST['user_name'],
+        'email' => $_POST['email'],
+        'role' => $_POST['role']
+    ];
 
-    $stmt = $conn->prepare("UPDATE users SET user_name=?, email=?, role=? WHERE user_id=?");
-    $stmt->bind_param("sssi", $username, $email, $user_role, $user_id);
-    $stmt->execute();
-
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Edited user ID $user_id: $username ($user_role)");
+    User::update($conn, $user_id, $data);
+    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Edited user ID $user_id: {$data['user_name']} ({$data['role']})");
     header("Location: users.php");
     exit();
 }
@@ -50,15 +49,12 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
 // --- Handle Delete User ---
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $user_id = $_POST['user_id'];
+    $delUser = User::getById($conn, $user_id);
 
-    $delUserRes = $conn->query("SELECT user_name, role FROM users WHERE user_id=$user_id");
-    $delUser = $delUserRes->fetch_assoc();
-
-    $stmt = $conn->prepare("DELETE FROM users WHERE user_id=?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Deleted user ID $user_id: {$delUser['user_name']} ({$delUser['role']})");
+    if ($delUser) {
+        User::delete($conn, $user_id);
+        logActivity($conn, $_SESSION['user_id'], $_SESSION['user_name'], "Deleted user ID $user_id: {$delUser->user_name} ({$delUser->role})");
+    }
     header("Location: users.php");
     exit();
 }
@@ -68,24 +64,17 @@ $search = $_GET['search'] ?? '';
 $sort = strtoupper($_GET['sort'] ?? 'ASC');
 $sort = $sort === 'DESC' ? 'DESC' : 'ASC';
 
-$sql = "SELECT user_id, user_name, email, role 
-        FROM users 
-        WHERE CAST(user_id AS CHAR) LIKE ? OR user_name LIKE ?
-        ORDER BY user_id $sort";
-
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare("SELECT user_id, user_name, email, role 
+                        FROM users 
+                        WHERE CAST(user_id AS CHAR) LIKE ? OR user_name LIKE ?
+                        ORDER BY user_id $sort");
 $searchParam = "%$search%";
 $stmt->bind_param("ss", $searchParam, $searchParam);
 $stmt->execute();
 $result = $stmt->get_result();
 
 $edit_user_id = $_GET['edit'] ?? null;
-if ($edit_user_id) {
-    $edit_stmt = $conn->prepare("SELECT * FROM users WHERE user_id=?");
-    $edit_stmt->bind_param("i", $edit_user_id);
-    $edit_stmt->execute();
-    $edit_result = $edit_stmt->get_result()->fetch_assoc();
-}
+$edit_result = $edit_user_id ? User::getById($conn, $edit_user_id) : null;
 ?>
 
 <?php include('../includes/layouts/header.php'); ?>
@@ -153,7 +142,6 @@ if ($edit_user_id) {
                                         <td>
                                             <?php if ($role === 'admin' && $edit_user_id == $row['user_id']): ?>
                                                 <select name="role" required>
-                                                    <option value="admin" <?= $row['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                                                     <option value="teacher" <?= $row['role'] === 'teacher' ? 'selected' : '' ?>>Teacher</option>
                                                     <option value="learner" <?= $row['role'] === 'learner' ? 'selected' : '' ?>>Learner</option>
                                                 </select>
@@ -194,7 +182,6 @@ if ($edit_user_id) {
             <?php if ($role === 'admin'): ?>
                 <div class="bottom-buttons">
                     <button id="addUserBtn" class="add-user-btn">+ Add User</button>
-                    <button class="show-more-btn">Show More</button>
                 </div>
 
                 <script>
@@ -202,45 +189,32 @@ if ($edit_user_id) {
                     const tbody = document.querySelector('.users-table tbody');
 
                     addBtn.addEventListener('click', () => {
-                        // Prevent multiple new rows
                         if (document.getElementById('newUserRow')) return;
 
                         const newRow = document.createElement('tr');
                         newRow.id = 'newUserRow';
 
                         newRow.innerHTML = `
-                            <td>New</td>
-                            <td><input type="text" name="user_name" placeholder="Full Name" required></td>
-                            <td><input type="email" name="email" placeholder="Email" required></td>
-                            <td>
-                                <select name="role" required>
-                                    <option value="">Select Role</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="teacher">Teacher</option>
-                                    <option value="learner">Learner</option>
-                                </select>
-                            </td>
-                            <td>
-                                <input type="password" name="password" placeholder="Password" required>
-                                <button type="submit" name="add_user">Save</button>
-                                <button type="button" id="cancelNewUser">Cancel</button>
-                            </td>
-                        `;
-
+        <td>New</td>
+        <td><input type="text" name="user_name" placeholder="Full Name" required></td>
+        <td><input type="email" name="email" placeholder="Email" required></td>
+        <td>
+            <select name="role" required>
+                <option value="teacher">Teacher</option>
+                <option value="learner">Learner</option>
+            </select>
+        </td>
+        <td>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" name="add_user">Save</button>
+            <button type="button" id="cancelNewUser">Cancel</button>
+        </td>
+    `;
                         tbody.appendChild(newRow);
 
-                        // Cancel button
                         document.getElementById('cancelNewUser').addEventListener('click', () => {
                             newRow.remove();
                         });
-                    });
-
-                    // Sidebar toggle
-                    const hamburger = document.getElementById('hamburger-btn');
-                    const sidebar = document.querySelector('.sidebar');
-
-                    hamburger.addEventListener('click', () => {
-                        sidebar.classList.toggle('collapsed');
                     });
                 </script>
             <?php endif; ?>

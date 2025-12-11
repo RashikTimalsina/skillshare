@@ -1,3 +1,15 @@
+/* ================= ADMIN DASHBOARD ================= */
+
+/* ================= MAIN DASHBOARD CONTAINER ================= */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  height: calc(100vh - 100px); /* topbar + footer approx 120px */
+  padding: 20px 40px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
 /* ================= DASHBOARD OVERVIEW CARDS ================= */
 .dashboard-overview {
   display: grid;
@@ -200,3 +212,232 @@
     padding: 0.75rem;
   }
 }
+
+/* ================= LEARNER DASHBOARD  ================= */
+
+/* ================= LEARNER DASHBOARD ================= */
+#learner-dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 20px 40px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  height: calc(100vh - 120px); /* Adjust for topbar + footer */
+}
+
+/* Learner overview cards */
+#learner-dashboard-main .learner-overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+#learner-dashboard-main .learner-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#learner-dashboard-main .learner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Middle section */
+#learner-dashboard-main .learner-middle-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+/* Active skills */
+#learner-dashboard-main .learner-activities,
+#learner-dashboard-main .learner-statistics {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  min-height: 250px;
+}
+
+#learner-dashboard-main .skill-card {
+  margin-bottom: 0.75rem;
+}
+
+.skill-progress-bar {
+  background: #eaeaea;
+  border-radius: 0.5rem;
+  height: 12px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.skill-progress-bar-inner {
+  height: 100%;
+  background: #4e73df;
+  border-radius: 0.5rem;
+}
+
+/* Quick actions */
+#learner-dashboard-main .learner-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+#learner-dashboard-main .learner-action-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#learner-dashboard-main .learner-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  #learner-dashboard-main .learner-middle-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ================= TEACHER DASHBOARD ================= */
+#teacher-dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 20px 40px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  height: calc(100vh - 120px); /* topbar + footer */
+}
+
+/* Teacher overview cards */
+#teacher-dashboard-main .teacher-overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+#teacher-dashboard-main .teacher-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#teacher-dashboard-main .teacher-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Middle section (stats + activities) */
+#teacher-dashboard-main .teacher-middle-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+/* Activities and statistics sections */
+#teacher-dashboard-main .teacher-activities,
+#teacher-dashboard-main .teacher-statistics {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  min-height: 250px;
+}
+
+#teacher-dashboard-main .teacher-activities table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#teacher-dashboard-main .teacher-activities th,
+#teacher-dashboard-main .teacher-activities td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+/* Quick actions */
+#teacher-dashboard-main .teacher-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+#teacher-dashboard-main .teacher-action-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#teacher-dashboard-main .teacher-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+#teacher-dashboard-main .teacher-action-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+  color: #555;
+}
+
+#teacher-dashboard-main .teacher-action-card p {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  #teacher-dashboard-main .teacher-middle-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  #teacher-dashboard-main .teacher-overview-cards,
+  #teacher-dashboard-main .teacher-quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  #teacher-dashboard-main .teacher-overview-cards,
+  #teacher-dashboard-main .teacher-quick-actions {
+    gap: 0.5rem;
+  }
+  #teacher-dashboard-main .teacher-card,
+  #teacher-dashboard-main .teacher-action-card {
+    padding: 0.75rem;
+  }
+  #teacher-dashboard-main .teacher-activities,
+  #teacher-dashboard-main .teacher-statistics {
+    padding: 0.75rem;
+  }
+}
+

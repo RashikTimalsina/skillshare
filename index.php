@@ -12,9 +12,6 @@ if (isset($_SESSION['user_id'])) {
     session_destroy();
 }
 
-// Fetch top 4 trending skills
-$query = "SELECT skill_name, description FROM skills ORDER BY created_at DESC LIMIT 4";
-$result = mysqli_query($conn, $query);
 ?>
 
 <!doctype html>
@@ -53,17 +50,7 @@ $result = mysqli_query($conn, $query);
             </div>
         </section>
 
-        <section class="section">
-            <h2>Trending Skills</h2>
-            <div class="cards" style="margin-top:24px">
-                <?php while ($skill = mysqli_fetch_assoc($result)): ?>
-                    <div class="feature">
-                        <h3><?= htmlspecialchars($skill['skill_name']) ?></h3>
-                        <p><?= htmlspecialchars(substr($skill['description'], 0, 80)) ?>...</p>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-        </section>
+       
         <!-- <div style="text-align:center;margin-top:80px"> <a class="btn" href="auth/signup.php">Get Started</a> </div> -->
     </main>
 

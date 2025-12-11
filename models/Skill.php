@@ -36,19 +36,19 @@ class Skill
         return $skills;
     }
 
-    public static function getTrending($conn, $limit = 4)
-    {
-        $stmt = $conn->prepare("SELECT * FROM skills ORDER BY created_at DESC LIMIT ?");
-        $stmt->bind_param("i", $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $skills = [];
-        while ($row = $result->fetch_assoc()) {
-            $skills[] = new Skill($row);
-        }
-        $stmt->close();
-        return $skills;
-    }
+    // public static function getTrending($conn, $limit = 4)
+    // {
+    //     $stmt = $conn->prepare("SELECT * FROM skills ORDER BY created_at DESC LIMIT ?");
+    //     $stmt->bind_param("i", $limit);
+    //     $stmt->execute();
+    //     $result = $stmt->get_result();
+    //     $skills = [];
+    //     while ($row = $result->fetch_assoc()) {
+    //         $skills[] = new Skill($row);
+    //     }
+    //     $stmt->close();
+    //     return $skills;
+    // }
 
     public static function create($conn, $data)
     {

@@ -71,11 +71,15 @@ $cards = [
         <div class="main-content-wrapper">
             <?php include('../includes/layouts/topbar.php'); ?>
 
-            <main class="main-content">
-                <!-- DASHBOARD CARDS -->
-                <section class="dashboard-overview">
+            <main id="learner-dashboard-main" class="main-content">
+                <h3 style="font-size: 1.5rem; color: #333; font-weight: 200; margin-top: 0rem; margin-bottom: 1rem;">
+                    Welcome Back, <?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?>!
+                </h3>
+
+                <!-- LEARNER DASHBOARD CARDS -->
+                <section class="learner-overview-cards">
                     <?php foreach ($cards as $card): ?>
-                        <div class="card" style="border-left:5px solid <?= $card['color'] ?>">
+                        <div class="learner-card" style="border-left:5px solid <?= $card['color'] ?>">
                             <i class="fas <?= $card['icon'] ?> card-icon" style="font-size:2rem; margin-bottom:10px; color:<?= $card['color'] ?>"></i>
                             <h3><?= $card['title'] ?></h3>
                             <p><?= $card['count'] ?></p>
@@ -84,16 +88,16 @@ $cards = [
                 </section>
 
                 <!-- MIDDLE SECTION -->
-                <!-- <div class="dashboard-middle"> -->
-                    <!-- ACTIVE SKILLS -->
-                    <!-- <div class="activities-section active-skills">
-                        <h>Active Skills</h>
+                <div class="learner-middle-section">
+                    <!-- Active Skills -->
+                    <div class="learner-activities">
+                        <h3>Active Skills</h3>
                         <?php if (!empty($allEnrollments)): ?>
                             <?php foreach ($allEnrollments as $enroll):
                                 $skillName = htmlspecialchars($enroll->skill_name ?? 'Unknown Skill');
-                                $skillProgress = $enroll->status === 'inactive' ? 100 : rand(10, 90); // Replace rand with actual progress if available
+                                $skillProgress = $enroll->status === 'inactive' ? 100 : rand(10, 90);
                             ?>
-                                <div class="skill-card">
+                                <div class="learner-skill-card">
                                     <h4><?= $skillName ?></h4>
                                     <div class="skill-progress-bar">
                                         <div class="skill-progress-bar-inner" style="width: <?= $skillProgress ?>%;"></div>
@@ -103,11 +107,11 @@ $cards = [
                         <?php else: ?>
                             <p style="text-align:center; color:#777;">No active skills. Enroll in new skills!</p>
                         <?php endif; ?>
-                    </div> -->
+                    </div>
 
-                    <!-- RECENT ACHIEVEMENTS / FEED -->
-                    <!-- <div class="statistics-section recent-achievements">
-                        <h2>Recent Achievements</h2>
+                    <!-- Recent Achievements -->
+                    <div class="learner-statistics">
+                        <h3>Recent Achievements</h3>
                         <?php if (!empty($recent_activities)): ?>
                             <?php foreach ($recent_activities as $act): ?>
                                 <div class="achievement-item">
@@ -119,32 +123,33 @@ $cards = [
                             <p style="text-align:center; color:#777;">No recent achievements</p>
                         <?php endif; ?>
                     </div>
-                </div> -->
+                </div>
 
                 <!-- QUICK ACTIONS -->
-                <section class="quick-actions">
-                    <div class="action-card" onclick="window.location.href='../pages/browse_skills.php'">
+                <section class="learner-quick-actions">
+                    <div class="learner-action-card" onclick="window.location.href='../pages/browse_skills.php'">
                         <i class="fas fa-search fa-2x" style="margin-bottom:10px; color:#4e73df;"></i>
                         <h3>Enroll in New Skill</h3>
                         <p>Browse and join available skills</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/skills.php'">
+                    <div class="learner-action-card" onclick="window.location.href='../pages/skills.php'">
                         <i class="fas fa-book fa-2x" style="margin-bottom:10px; color:#1cc88a;"></i>
                         <h3>My Skills</h3>
                         <p>View your enrolled and completed skills</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/feedbacks.php'">
+                    <div class="learner-action-card" onclick="window.location.href='../pages/feedbacks.php'">
                         <i class="fas fa-comments fa-2x" style="margin-bottom:10px; color:#f6c23e;"></i>
                         <h3>Give Feedback</h3>
                         <p>Share your feedback on courses</p>
                     </div>
-                    <div class="action-card" onclick="window.location.href='../pages/certificates.php'">
+                    <div class="learner-action-card" onclick="window.location.href='../pages/certificates.php'">
                         <i class="fas fa-certificate fa-2x" style="margin-bottom:10px; color:#36b9cc;"></i>
                         <h3>My Certificates</h3>
                         <p>View and download earned certificates</p>
                     </div>
                 </section>
             </main>
+
 
             <?php include('../includes/layouts/footer.php'); ?>
         </div>

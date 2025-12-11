@@ -2,7 +2,7 @@
 class User
 {
     public $user_id;
-    public $full_name;
+    public $user_name;
     public $email;
     public $password;
     public $role;
@@ -15,7 +15,7 @@ class User
     public function __construct($data = [])
     {
         $this->user_id = $data['user_id'] ?? null;
-        $this->full_name = $data['full_name'] ?? null;
+        $this->user_name = $data['user_name'] ?? null;
         $this->email = $data['email'] ?? null;
         $this->password = $data['password'] ?? null;
         $this->role = $data['role'] ?? null;
@@ -28,7 +28,7 @@ class User
 
     public static function getAll($conn)
     {
-        $result = $conn->query("SELECT * FROM users ORDER BY full_name ASC");
+        $result = $conn->query("SELECT * FROM users ORDER BY user_name ASC");
         $users = [];
         while ($row = $result->fetch_assoc()) {
             $users[] = new User($row);
@@ -38,7 +38,7 @@ class User
 
     public static function getAllByRole($conn, $role)
     {
-        $stmt = $conn->prepare("SELECT * FROM users WHERE role=? ORDER BY full_name ASC");
+        $stmt = $conn->prepare("SELECT * FROM users WHERE role=? ORDER BY user_name ASC");
         $stmt->bind_param("s", $role);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -59,4 +59,45 @@ class User
         $stmt->close();
         return $result ? new User($result) : null;
     }
+
+    // --- NEW CRUD METHODS ---
+    public static function create($conn, $data)
+    {
+        $stmt = $conn->prepare("INSERT INTO users (user_name, email, role, password) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param(
+            "ssss",
+            $data['user_name'],
+            $data['email'],
+            $data['role'],
+            $data['password']
+        );
+        $stmt->execute();
+        $stmt->close();
+        return $conn->insert_id;
+    }
+
+    public static function update($conn, $id, $data)
+    {
+        $stmt = $conn->prepare("UPDATE users SET user_name=?, email=?, role=? WHERE user_id=?");
+        $stmt->bind_param(
+            "sssi",
+            $data['user_name'],
+            $data['email'],
+            $data['role'],
+            $id
+        );
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public static function delete($conn, $id)
+    {
+        $stmt = $conn->prepare("DELETE FROM users WHERE user_id=?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+    }
 }
+
+
+

@@ -6,11 +6,11 @@ function checkRole($requiredRole)
         session_start();
     }
 
-    if (!isset($_SESSION['user_id'], $_SESSION['user_role'])) {
-        header("Location: /index.php");
+    // Redirect to login if user is not logged in
+    if (empty($_SESSION['user_id']) || empty($_SESSION['user_role'])) {
+        header("Location: ../auth/login.php");
         exit();
     }
-
     if ($_SESSION['user_role'] !== $requiredRole) {
         switch ($_SESSION['user_role']) {
             case 'admin':
@@ -23,8 +23,7 @@ function checkRole($requiredRole)
                 header("Location: ../dashboard/learner_dashboard.php");
                 break;
             default:
-                header("Location: ../index.php");
-        }
+                header("Location: ../unauthorized.php");        }
         exit();
     }
 }

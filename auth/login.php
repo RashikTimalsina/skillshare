@@ -17,18 +17,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $stmt = $conn->prepare("SELECT user_id, password, role FROM users WHERE email = ?");
+        $stmt = $conn->prepare("SELECT user_id, user_name, password, role FROM users WHERE email = ?");
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows === 1) {
-            $stmt->bind_result($user_id, $hash, $role);
+            $stmt->bind_result($user_id,$user_name, $hash, $role);
             $stmt->fetch();
 
             if (password_verify($password, $hash)) {
                 $_SESSION['user_id'] = $user_id;
                 $_SESSION['user_role'] = $role;
+                $_SESSION['user_name'] = $user_name; 
                 header("Location: ../dashboard/{$_SESSION['user_role']}_dashboard.php");
                 exit;
             } else {

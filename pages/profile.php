@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $success = true;
         $user = getUserById($conn, $userId); // Refresh user
     }
-}
+} 
 
 // Prepare display path for profile pic
 $profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
@@ -55,7 +55,7 @@ $profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
     <div class="profile-header">
         <div class="avatar-large">
             <?php if ($profilePic): ?>
-                <img src="<?= htmlspecialchars($profilePic) ?>" alt="avatar" class="profile-pic">
+                <img src="<?= "SELECT * FROM users WHERE profile_pic=?" ?>" alt="avatar" class="profile-pic">
             <?php else: ?>
                 <div class="avatar-placeholder"><?= strtoupper(substr($user['user_name'], 0, 1)) ?></div>
             <?php endif; ?>
