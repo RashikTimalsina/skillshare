@@ -1,16 +1,31 @@
-/* ================= ADMIN DASHBOARD ================= */
+:root {
+  --bg-main: #f3f4f6;        /* page background */
+  --bg-card: #ffffff;        /* cards */
+  --bg-hover: #f9fafb;       /* subtle hover */
+  --border-light: #e5e7eb;   /* borders */
+  --text-primary: #111827;   /* main text */
+  --text-secondary: #6b7280; /* muted text */
+  --accent: #4f46e5;         /* indigo accent */
+  --accent-soft: #eef2ff;    /* hover background */
+}
 
-/* ================= MAIN DASHBOARD CONTAINER ================= */
+/* ==========================================================
+   ================= ADMIN DASHBOARD =======================
+   ========================================================== */
+
+/* ----------------- MAIN DASHBOARD CONTAINER ----------------- */
 .main-content {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  height: calc(100vh - 100px); /* topbar + footer approx 120px */
+  gap: 0.5rem;
+  height: calc(100vh - 100px);
   padding: 20px 40px;
   box-sizing: border-box;
   overflow: hidden;
+  color: var(--text-primary);
 }
-/* ================= DASHBOARD OVERVIEW CARDS ================= */
+
+/* ----------------- DASHBOARD OVERVIEW CARDS ----------------- */
 .dashboard-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -19,32 +34,42 @@
 }
 
 .card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent; 
 }
 
 .card h3 {
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
-  color: #555;
+  color: var(--text-primary);
 }
 
 .card p {
   font-size: 1.3rem;
-  font-weight: bold;
-  color: #000;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-/* ================= MIDDLE SECTION ================= */
+.card-icon,
+.learner-card .card-icon,
+.learner-action-card i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+/* ----------------- MIDDLE SECTION ----------------- */
 .dashboard-middle {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -52,14 +77,20 @@
   margin: 1.5rem 0;
 }
 
-/* ================= RECENT ACTIVITIES ================= */
+/* ----------------- RECENT ACTIVITIES ----------------- */
 .activities-section,
 .statistics-section {
   background: #fff;
   border-radius: 0.5rem;
   padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   min-height: 250px;
+  transition: box-shadow 0.3s ease;
+}
+
+.activities-section:hover,
+.statistics-section:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .activities-section table {
@@ -71,69 +102,49 @@
 .activities-section td {
   padding: 0.5rem 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-/* ================= STATISTICS ================= */
-.statistics-section .stat-card {
-  background: #f7f7f7;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
-  text-align: center;
-  font-weight: 600;
-  color: #333;
+/* Add to dashboard.css */
+/* .bar-chart-container {
+    display: flex;
+    align-items: flex-end;
+    height: 100%; 
+    gap: 1rem;
+    padding: 1rem 0;
 }
 
-/* ================= LEARNER PROGRESS CHART ================= */
-.progress-chart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 250px;
-  position: relative;
+.bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    position: relative;
 }
 
-.circular-progress {
-  position: relative;
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  background: conic-gradient(
-    #4e73df calc(var(--progress) * 1%),
-    #eaeaea calc(var(--progress) * 1%)
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 1s ease;
+.bar {
+    width: 40px;
+    background-color: #4f46e5;
+    transition: height 0.6s ease;
+    border-radius: 4px 4px 0 0;
 }
 
-.circular-progress::before {
-  content: "";
-  position: absolute;
-  width: 130px;
-  height: 130px;
-  background: #fff;
-  border-radius: 50%;
+.bar-label {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    text-align: center;
 }
 
-.progress-value {
-  position: absolute;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #333;
-}
+.bar-value {
+    position: absolute;
+    top: -20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+} */
 
-.progress-label {
-  margin-top: 1rem;
-  font-size: 1rem;
-  color: #666;
-  font-weight: 500;
-}
 
-/* ================= QUICK ACTIONS CARDS ================= */
+/* ----------------- QUICK ACTIONS CARDS ----------------- */
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -146,20 +157,22 @@
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent;
 }
 
 .action-card h3 {
   font-size: 1.1rem;
   margin-bottom: 0.25rem;
-  color: #555;
+  color: #111;
 }
 
 .action-card p {
@@ -167,7 +180,7 @@
   color: #666;
 }
 
-/* ================= RESPONSIVE ================= */
+/* ----------------- RESPONSIVE ----------------- */
 @media (max-width: 1440px) {
   .dashboard-overview,
   .quick-actions {
@@ -213,20 +226,21 @@
   }
 }
 
-/* ================= LEARNER DASHBOARD  ================= */
+/* ==========================================================
+   ================= LEARNER DASHBOARD =====================
+   ========================================================== */
 
-/* ================= LEARNER DASHBOARD ================= */
 #learner-dashboard-main {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 20px 40px;
+  padding: 80px 40px 40px;
   box-sizing: border-box;
   overflow-y: auto;
-  height: calc(100vh - 120px); /* Adjust for topbar + footer */
+  min-height: calc(100vh - 120px);
 }
 
-/* Learner overview cards */
+/* ----------------- OVERVIEW CARDS ----------------- */
 #learner-dashboard-main .learner-overview-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -239,16 +253,18 @@
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
 }
 
 #learner-dashboard-main .learner-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent;
 }
 
-/* Middle section */
+/* ----------------- MIDDLE SECTION ----------------- */
 #learner-dashboard-main .learner-middle-section {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -256,35 +272,45 @@
   margin: 1rem 0;
 }
 
-/* Active skills */
+/* ----------------- ACTIVITIES ----------------- */
 #learner-dashboard-main .learner-activities,
-#learner-dashboard-main .learner-statistics {
+#learner-dashboard-main .learner-progress {
   background: #fff;
   border-radius: 0.5rem;
   padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   min-height: 250px;
+  transition: box-shadow 0.3s ease;
 }
 
-#learner-dashboard-main .skill-card {
-  margin-bottom: 0.75rem;
+#learner-dashboard-main .learner-activities:hover,
+#learner-dashboard-main .learner-progress:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
-.skill-progress-bar {
-  background: #eaeaea;
-  border-radius: 0.5rem;
-  height: 12px;
+#learner-dashboard-main .learner-activities table {
   width: 100%;
-  overflow: hidden;
+  border-collapse: collapse;
+  margin-top: 10px;
 }
 
-.skill-progress-bar-inner {
-  height: 100%;
-  background: #4e73df;
-  border-radius: 0.5rem;
+#learner-dashboard-main .learner-activities th {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #e3e6f0;
 }
 
-/* Quick actions */
+#learner-dashboard-main .learner-activities td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111;
+}
+
+#learner-dashboard-main .learner-activities tbody tr:hover {
+  background: #f3f4ff;
+}
+
+/* ----------------- QUICK ACTIONS ----------------- */
 #learner-dashboard-main .learner-quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -297,36 +323,40 @@
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
 }
 
 #learner-dashboard-main .learner-action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent;
 }
 
-/* Responsive adjustments */
+/* ----------------- RESPONSIVE ----------------- */
 @media (max-width: 1024px) {
   #learner-dashboard-main .learner-middle-section {
     grid-template-columns: 1fr;
   }
 }
 
+/* ==========================================================
+   ================= TEACHER DASHBOARD =====================
+   ========================================================== */
 
-/* ================= TEACHER DASHBOARD ================= */
 #teacher-dashboard-main {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 20px 40px;
+  padding: 80px 40px 40px;
   box-sizing: border-box;
   overflow-y: auto;
-  height: calc(100vh - 120px); /* topbar + footer */
+  min-height: calc(100vh - 120px);
 }
 
-/* Teacher overview cards */
+/* ----------------- OVERVIEW CARDS ----------------- */
 #teacher-dashboard-main .teacher-overview-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -339,16 +369,27 @@
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
 }
 
 #teacher-dashboard-main .teacher-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent;
 }
 
-/* Middle section (stats + activities) */
+/* Card icons */
+#teacher-dashboard-main .teacher-card .card-icon,
+#teacher-dashboard-main .teacher-action-card i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+  color: #555;
+}
+
+/* ----------------- MIDDLE SECTION ----------------- */
 #teacher-dashboard-main .teacher-middle-section {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -356,29 +397,41 @@
   margin: 1rem 0;
 }
 
-/* Activities and statistics sections */
+/* Activities and statistics */
 #teacher-dashboard-main .teacher-activities,
 #teacher-dashboard-main .teacher-statistics {
   background: #fff;
   border-radius: 0.5rem;
   padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   min-height: 250px;
+  transition: box-shadow 0.3s ease;
+}
+
+#teacher-dashboard-main .teacher-activities:hover,
+#teacher-dashboard-main .teacher-statistics:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 #teacher-dashboard-main .teacher-activities table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
 #teacher-dashboard-main .teacher-activities th,
 #teacher-dashboard-main .teacher-activities td {
-  padding: 0.5rem 0.75rem;
+  padding: 10px;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111;
 }
 
-/* Quick actions */
+#teacher-dashboard-main .teacher-activities tbody tr:hover {
+  background: #f3f4ff;
+}
+
+/* ----------------- QUICK ACTIONS ----------------- */
 #teacher-dashboard-main .teacher-quick-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -391,28 +444,30 @@
   border-radius: 0.5rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  border: 1px solid transparent;
 }
 
 #teacher-dashboard-main .teacher-action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  border: 1px solid transparent;
 }
 
 #teacher-dashboard-main .teacher-action-card h3 {
   font-size: 1.1rem;
   margin-bottom: 0.25rem;
-  color: #555;
+  color: #111;
 }
 
 #teacher-dashboard-main .teacher-action-card p {
   font-size: 0.9rem;
-  color: #666;
+  color: #555;
 }
 
-/* Responsive adjustments */
+/* ----------------- RESPONSIVE ----------------- */
 @media (max-width: 1024px) {
   #teacher-dashboard-main .teacher-middle-section {
     grid-template-columns: 1fr;
@@ -440,4 +495,3 @@
     padding: 0.75rem;
   }
 }
-

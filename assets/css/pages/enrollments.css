@@ -1,0 +1,33 @@
+/* Same as users.css for consistent layout */
+@import url('users.css');
+
+/* Style for learner enroll form */
+.learner-enroll-form {
+    display: flex;
+    gap: 10px; /* space between select and button */
+    margin-top: 15px;
+    align-items: center;
+}
+
+.learner-enroll-form select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    min-width: 200px;
+}
+
+.learner-enroll-form button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background-color: #4CAF50; 
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.learner-enroll-form button:hover {
+    background-color: #45a049;
+}

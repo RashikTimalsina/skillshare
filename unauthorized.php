@@ -1,8 +1,5 @@
 <?php
-// unauthorized.php
 session_start();
-
-// Optional: get user info if logged in
 $user_name = $_SESSION['user_name'] ?? 'Guest';
 ?>
 <!DOCTYPE html>
@@ -16,16 +13,15 @@ $user_name = $_SESSION['user_name'] ?? 'Guest';
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f9f9f9;
-            color: #333;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            background: #f9f9f9;
         }
 
-        .unauthorized-container {
+        .container {
             text-align: center;
             padding: 40px;
             border-radius: 12px;
@@ -33,34 +29,34 @@ $user_name = $_SESSION['user_name'] ?? 'Guest';
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .unauthorized-container h1 {
+        .container h1 {
             font-size: 48px;
-            margin-bottom: 20px;
             color: #dc3545;
+            margin-bottom: 20px;
         }
 
-        .unauthorized-container p {
+        .container p {
             font-size: 18px;
             margin-bottom: 30px;
         }
 
-        .unauthorized-container a {
+        .container a {
             text-decoration: none;
             color: #fff;
             background: #0d6efd;
             padding: 10px 25px;
             border-radius: 6px;
-            transition: background 0.3s;
+            transition: 0.3s;
         }
 
-        .unauthorized-container a:hover {
+        .container a:hover {
             background: #084298;
         }
     </style>
 </head>
 
 <body>
-    <div class="unauthorized-container">
+    <div class="container">
         <h1>❌ Access Denied</h1>
         <p>Hello <?= htmlspecialchars($user_name) ?>, you are not authorized to view this page.</p>
         <a href="index.php">Go to Home</a>

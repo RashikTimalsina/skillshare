@@ -4,6 +4,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+date_default_timezone_set('Asia/Kathmandu');
+
+
 // Database credentials
 $DB_HOST = 'localhost';
 $DB_USER = 'root';

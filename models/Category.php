@@ -32,34 +32,60 @@ class Category
         return $categories;
     }
 
+    private static function existsByName($conn, $name, $excludeId = null)
+    {
+        if ($excludeId) {
+            $stmt = $conn->prepare("SELECT category_id FROM categories WHERE category_name=? AND category_id != ?");
+            $stmt->bind_param("si", $name, $excludeId);
+        } else {
+            $stmt = $conn->prepare("SELECT category_id FROM categories WHERE category_name=?");
+            $stmt->bind_param("s", $name);
+        }
+        $stmt->execute();
+        $stmt->store_result();
+        $exists = $stmt->num_rows > 0;
+        $stmt->close();
+        return $exists;
+    }
+
     public static function create($conn, $data, $userId = null, $userName = null)
     {
+        $name = trim($data['category_name']);
+        if (self::existsByName($conn, $name)) {
+            return false; // Duplicate
+        }
+
         $stmt = $conn->prepare("INSERT INTO categories (category_name, description) VALUES (?, ?)");
-        $stmt->bind_param("ss", $data['category_name'], $data['description']);
-        $stmt->execute();
+        $stmt->bind_param("ss", $name, $data['description']);
+        $success = $stmt->execute();
         $id = $stmt->insert_id;
         $stmt->close();
 
-        // Auto log if user info provided
-        if ($userId && $userName) {
-            logActivity($conn, $userId, $userName, "Added new category: {$data['category_name']}");
+        if ($success && $userId) {
+            logActivity($conn, $userId, "Added new category: {$name}");
         }
 
-        return $id;
+
+        return $success ? $id : false;
     }
 
     public static function update($conn, $id, $data, $userId = null, $userName = null)
     {
-        $stmt = $conn->prepare("UPDATE categories SET category_name=?, description=? WHERE category_id=?");
-        $stmt->bind_param("ssi", $data['category_name'], $data['description'], $id);
-        $stmt->execute();
-        $stmt->close();
-
-        if ($userId && $userName) {
-            logActivity($conn, $userId, $userName, "Edited category ID $id: {$data['category_name']}");
+        $name = trim($data['category_name']);
+        if (self::existsByName($conn, $name, $id)) {
+            return false; // Duplicate
         }
 
-        return true;
+        $stmt = $conn->prepare("UPDATE categories SET category_name=?, description=? WHERE category_id=?");
+        $stmt->bind_param("ssi", $name, $data['description'], $id);
+        $success = $stmt->execute();
+        $stmt->close();
+
+        if ($success && $userId) {
+            logActivity($conn, $userId, "Edited category ID $id: {$name}");
+        }
+
+        return $success;
     }
 
     public static function delete($conn, $id, $userId = null, $userName = null)
@@ -69,13 +95,13 @@ class Category
 
         $stmt = $conn->prepare("DELETE FROM categories WHERE category_id=?");
         $stmt->bind_param("i", $id);
-        $stmt->execute();
+        $success = $stmt->execute();
         $stmt->close();
 
-        if ($userId && $userName) {
-            logActivity($conn, $userId, $userName, "Deleted category ID $id: {$category->category_name}");
+        if ($success && $userId ) {
+            logActivity($conn, $userId,  "Deleted category ID $id: {$category->category_name}");
         }
 
-        return true;
+        return $success;
     }
 }

@@ -1,55 +1,66 @@
 <?php
 // ==========================================
 // dashboard/learner_dashboard.php
+// Learner-facing dashboard with enrollments,
+// progress, certificates, feedback, and activity.
 // ==========================================
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 include('../includes/config.php');
-require_once __DIR__ . '/../includes/functions.php';
-
-// Models
-require_once __DIR__ . '/../models/Enrollment.php';
-require_once __DIR__ . '/../models/Certificate.php';
-require_once __DIR__ . '/../models/Feedback.php';
-require_once __DIR__ . '/../models/Activity.php';
+include('../includes/functions.php');
 
 include('../middlewares/session_check.php');
 include('../middlewares/role_check.php');
-checkRole('learner');
+
+allowRoles(['learner']);
+
+// Load Models
+require_once __DIR__ . '/../models/Enrollment.php';
+require_once __DIR__ . '/../models/Certificate.php';
+require_once __DIR__ . '/../models/Feedback.php';
+require_once __DIR__ . '/../models/Skill.php';
 
 $learner_id = $_SESSION['user_id'];
-$user_name = $_SESSION['user_name'] ?? 'Unknown User';
+$user_name = $_SESSION['user_name'] ?? 'Learner';
 
-// Log dashboard visit once
-if (!isset($_SESSION['dashboard_visited'])) {
-    logActivity($conn, $learner_id, $user_name, "Logged in");
-    $_SESSION['dashboard_visited'] = true;
+// Activity logging (once per session)
+if (!isset($_SESSION['learner_dashboard_visited'])) {
+    logLearnerActivity($conn, $learner_id, "Visited Learner Dashboard");
+    $_SESSION['learner_dashboard_visited'] = true;
 }
 
-// ===== Dashboard counts using models =====
-$allEnrollments = Enrollment::getAllByUserId($conn, $learner_id);
-$skills_enrolled = count($allEnrollments);
-$skills_completed = count(array_filter($allEnrollments, fn($e) => $e->status === 'inactive'));
 
-$allCertificates = Certificate::getByLearnerId($conn, $learner_id);
+// ==============================
+// Dashboard metrics
+// ==============================
+$allEnrollments = Enrollment::getAllByUserId($conn, $learner_id);
+$active_enrollments = array_filter($allEnrollments, fn($e) => $e['status'] === 'enrolled');
+$completed_enrollments = count(array_filter($allEnrollments, fn($e) => $e['status'] === 'completed'));
+$dropped_enrollments = count(array_filter($allEnrollments, fn($e) => $e['status'] === 'dropped'));
+
+$allCertificates = Certificate::getAllByLearner($conn, $learner_id);
 $certificates_earned = count($allCertificates);
 
-$allFeedbacks = Feedback::getByUserId($conn, $learner_id);
+$allFeedbacks = Feedback::getByUser($conn, $learner_id);
+
 $feedback_given = count(array_filter($allFeedbacks, fn($f) => $f->feedback_given === 'yes'));
 
-$progress = $skills_enrolled > 0 ? round(($skills_completed / $skills_enrolled) * 100) : 0;
+// ==============================
+// Recent Activities (limit 5)
+// ==============================
+$recent_activities = getRecentActivities($conn, 'learner', $learner_id, 5);
 
-// Recent activities (last 10)
-$recent_activities = Activity::getRecentByUserId($conn, $learner_id, 10);
-
-// Cards array
+// ==============================
+// Dashboard Cards
+// ==============================
 $cards = [
-    ['title' => 'Skills Enrolled', 'count' => $skills_enrolled, 'icon' => 'fa-book', 'color' => '#4e73df'],
-    ['title' => 'Skills Completed', 'count' => $skills_completed, 'icon' => 'fa-check-circle', 'color' => '#1cc88a'],
-    ['title' => 'Certificates Earned', 'count' => $certificates_earned, 'icon' => 'fa-certificate', 'color' => '#36b9cc'],
-    ['title' => 'Feedback Given', 'count' => $feedback_given, 'icon' => 'fa-comments', 'color' => '#f6c23e'],
+    ['title' => 'Active Enrollments', 'count' => count($active_enrollments), 'icon' => 'fa-user-graduate', 'color' => '#1cc88a'],
+    ['title' => 'Completed Skills', 'count' => $completed_enrollments, 'icon' => 'fa-check-circle', 'color' => '#36b9cc'],
+    ['title' => 'Dropped Skills', 'count' => $dropped_enrollments, 'icon' => 'fa-times-circle', 'color' => '#e74a3b'],
+    ['title' => 'Certificates Earned', 'count' => $certificates_earned, 'icon' => 'fa-certificate', 'color' => '#f6c23e'],
 ];
 ?>
 
@@ -63,6 +74,7 @@ $cards = [
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 </head>
 
 <body>
@@ -71,89 +83,98 @@ $cards = [
         <div class="main-content-wrapper">
             <?php include('../includes/layouts/topbar.php'); ?>
 
-            <main id="learner-dashboard-main" class="main-content">
-                <h3 style="font-size: 1.5rem; color: #333; font-weight: 200; margin-top: 0rem; margin-bottom: 1rem;">
-                    Welcome Back, <?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?>!
-                </h3>
+            <main id="learner-dashboard-main">
 
-                <!-- LEARNER DASHBOARD CARDS -->
+                <h3>Welcome, <?= htmlspecialchars($user_name) ?>!</h3>
+
                 <section class="learner-overview-cards">
                     <?php foreach ($cards as $card): ?>
                         <div class="learner-card" style="border-left:5px solid <?= $card['color'] ?>">
-                            <i class="fas <?= $card['icon'] ?> card-icon" style="font-size:2rem; margin-bottom:10px; color:<?= $card['color'] ?>"></i>
+                            <i class="fas <?= $card['icon'] ?> card-icon" style="color:<?= $card['color'] ?>"></i>
                             <h3><?= $card['title'] ?></h3>
                             <p><?= $card['count'] ?></p>
                         </div>
                     <?php endforeach; ?>
                 </section>
 
-                <!-- MIDDLE SECTION -->
-                <div class="learner-middle-section">
-                    <!-- Active Skills -->
+                <!-- Split Section: Left = Activities, Right = Active Skills Progress -->
+                <section class="learner-middle-section">
                     <div class="learner-activities">
-                        <h3>Active Skills</h3>
-                        <?php if (!empty($allEnrollments)): ?>
-                            <?php foreach ($allEnrollments as $enroll):
-                                $skillName = htmlspecialchars($enroll->skill_name ?? 'Unknown Skill');
-                                $skillProgress = $enroll->status === 'inactive' ? 100 : rand(10, 90);
-                            ?>
-                                <div class="learner-skill-card">
-                                    <h4><?= $skillName ?></h4>
-                                    <div class="skill-progress-bar">
-                                        <div class="skill-progress-bar-inner" style="width: <?= $skillProgress ?>%;"></div>
+                        <h3>Recent Activities</h3>
+                        <?php if (!empty($recent_activities)): ?>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Activity</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recent_activities as $act): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($act['action'] ?? '') ?></td>
+                                            <td><?= !empty($act['created_at']) ? date('d M Y, H:i', strtotime($act['created_at'])) : 'N/A' ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <p>No recent activities</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- <div class="learner-progress">
+                        <h3>Active Skills Progress</h3>
+                        <?php if (!empty($active_enrollments)): ?>
+                            <?php foreach ($active_enrollments as $enroll): ?>
+                                <?php
+                                $skill = Skill::getById($conn, $enroll['skills_skill_id']);
+                                $progress = Enrollment::calculateProgress($conn, $enroll['enrollment_id']);
+                                ?>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-title"><?= htmlspecialchars($skill->skill_name ?? 'Unknown Skill') ?></div>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill" style="width: <?= $progress ?>%;">
+                                            <?= $progress ?>%
+                                        </div>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <p style="text-align:center; color:#777;">No active skills. Enroll in new skills!</p>
+                            <p>No active enrollments</p>
                         <?php endif; ?>
-                    </div>
-
-                    <!-- Recent Achievements -->
-                    <div class="learner-statistics">
-                        <h3>Recent Achievements</h3>
-                        <?php if (!empty($recent_activities)): ?>
-                            <?php foreach ($recent_activities as $act): ?>
-                                <div class="achievement-item">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span><?= htmlspecialchars($act->action) ?> — <?= date('d M Y', strtotime($act->created_at)) ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p style="text-align:center; color:#777;">No recent achievements</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- QUICK ACTIONS -->
-                <section class="learner-quick-actions">
-                    <div class="learner-action-card" onclick="window.location.href='../pages/browse_skills.php'">
-                        <i class="fas fa-search fa-2x" style="margin-bottom:10px; color:#4e73df;"></i>
-                        <h3>Enroll in New Skill</h3>
-                        <p>Browse and join available skills</p>
-                    </div>
-                    <div class="learner-action-card" onclick="window.location.href='../pages/skills.php'">
-                        <i class="fas fa-book fa-2x" style="margin-bottom:10px; color:#1cc88a;"></i>
-                        <h3>My Skills</h3>
-                        <p>View your enrolled and completed skills</p>
-                    </div>
-                    <div class="learner-action-card" onclick="window.location.href='../pages/feedbacks.php'">
-                        <i class="fas fa-comments fa-2x" style="margin-bottom:10px; color:#f6c23e;"></i>
-                        <h3>Give Feedback</h3>
-                        <p>Share your feedback on courses</p>
-                    </div>
-                    <div class="learner-action-card" onclick="window.location.href='../pages/certificates.php'">
-                        <i class="fas fa-certificate fa-2x" style="margin-bottom:10px; color:#36b9cc;"></i>
-                        <h3>My Certificates</h3>
-                        <p>View and download earned certificates</p>
-                    </div>
+                    </div> -->
                 </section>
+
+                <h3>Quick Actions</h3>
+                <section class="learner-quick-actions">
+                    <?php
+                    $quickActionColors = ['#1cc88a', '#6f42c1', '#f6c23e', '#e74a3b'];
+                    $learnerActions = [
+                        ['title' => 'View All Skills', 'icon' => 'fa-book', 'link' => '../pages/skills.php', 'desc' => 'Get a proper view of all skills'],
+                        ['title' => 'Enroll in New Skill', 'icon' => 'fa-search', 'link' => '../pages/browse_skills.php', 'desc' => 'Browse and join available skills'],
+                        ['title' => 'Give Feedback', 'icon' => 'fa-comments', 'link' => '../pages/feedbacks.php', 'desc' => 'Share your feedback on completed courses'],
+                        ['title' => 'My Certificates', 'icon' => 'fa-certificate', 'link' => '../pages/learner_certificates.php', 'desc' => 'View & download certificates'],
+                    ];
+                    ?>
+
+                    <?php foreach ($learnerActions as $i => $action):
+                        $color = $quickActionColors[$i % count($quickActionColors)];
+                    ?>
+                        <div class="learner-action-card" onclick="window.location.href='<?= $action['link'] ?>'">
+                            <i class="fas <?= $action['icon'] ?>" style="color: <?= $color ?>;"></i>
+                            <h3><?= $action['title'] ?></h3>
+                            <p><?= $action['desc'] ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                </section>
+
+
             </main>
-
-
             <?php include('../includes/layouts/footer.php'); ?>
         </div>
     </div>
+
 </body>
 
 </html>

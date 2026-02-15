@@ -1,6 +1,19 @@
 <?php
-// This file just includes the checkRole() function
-require_once __DIR__ . '/../includes/functions.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Usage: call checkRole('learner') or checkRole('teacher') in the dashboard page
-// Do NOT call it here globally; it should be called per page.
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: 0");
+
+function allowRoles(array $allowedRoles)
+{
+    if (empty($_SESSION['user_role'])) {
+        header("Location: ../auth/login.php");
+        exit();
+    }
+    if (!in_array($_SESSION['user_role'], $allowedRoles, true)) {
+        header("Location: ../unauthorized.php");
+        exit();
+    }
+}

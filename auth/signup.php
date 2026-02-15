@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 ob_start();
 session_start();
 require_once __DIR__ . '/../includes/config.php';
@@ -7,20 +11,44 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $username = trim($_POST['username'] ?? '');
     $email    = strtolower(trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm_password'] ?? '';
     $role     = ($_POST['role'] ?? 'learner') === 'teacher' ? 'teacher' : 'learner';
+    $status   = ($role === 'teacher') ? 'inactive' : 'active';
     $agree    = isset($_POST['agree']);
 
-    if ($username === '') $errors[] = "Username is required.";
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email is required.";
-    if (strlen($password) < 8) $errors[] = "Password must be at least 8 characters.";
-    if ($password !== $confirm) $errors[] = "Passwords do not match.";
-    if (!$agree) $errors[] = "You must agree to Terms of Service.";
+    // ========== VALIDATION ==========
+    if (!$username) {
+        $errors[] = "Full Name is required.";
+    } elseif (!preg_match("/^([A-Z][a-z]+(?:[\s'-][A-Z][a-z]+)*)$/", $username)) {
+        $errors[] = "Full Name must start with uppercase letters and contain only letters, spaces, hyphens, or apostrophes.";
+    }
 
+    if (!$email) {
+        $errors[] = "Email is required.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Invalid Email format.";
+    }
+
+    if (strlen($password) < 8) {
+        $errors[] = "Password must be at least 8 characters.";
+    }
+
+    if ($password !== $confirm) {
+        $errors[] = "Passwords do not match.";
+    }
+
+    if (!$agree) {
+        $errors[] = "You must agree to Terms of Service and Privacy Policy.";
+    }
+
+    // ========== DATABASE CHECKS ==========
     if (empty($errors)) {
+
+        // Check if email exists
         $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
         $stmt->bind_param('s', $email);
         $stmt->execute();
@@ -29,25 +57,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->num_rows > 0) {
             $errors[] = "Email is already registered. Try logging in.";
         } else {
+
             $hash = password_hash($password, PASSWORD_BCRYPT);
-            $ins = $conn->prepare("INSERT INTO users (user_name, email, password, role) VALUES (?, ?, ?, ?)");
-            $ins->bind_param('ssss', $username, $email, $hash, $role);
+
+            // Insert into users
+            $ins = $conn->prepare("INSERT INTO users (user_name, email, password, role, agreed_terms,status) VALUES (?, ?, ?, ?, ?,?)");
+            $agreed = $agree ? 1 : 0;
+            $ins->bind_param('ssssss', $username, $email, $hash, $role, $agreed, $status);
 
             if ($ins->execute()) {
-                $_SESSION['user_id'] = $ins->insert_id;
-                $_SESSION['user_role'] = strtolower($role);
-                header("Location: ../dashboard/{$_SESSION['user_role']}_dashboard.php");
-                exit;
+
+                $newUserId = $conn->insert_id;
+
+                // If teacher, insert into teachers as pending
+                if ($role === 'teacher') {
+                    $stmtTeacher = $conn->prepare("INSERT INTO teachers (users_user_id, status) VALUES (?, 'inactive')");
+                    $stmtTeacher->bind_param("i", $newUserId);
+                    $stmtTeacher->execute();
+                    $stmtTeacher->close();
+                }
+
+                // Set session
+                $_SESSION['user_id']   = $newUserId;
+                $_SESSION['user_role'] = $role;
+                $_SESSION['user_name'] = $username;
+
+                header("Location: login.php?registered=1&role=" . urlencode($role));
+                exit();
             } else {
                 $errors[] = "Registration failed. Please try again.";
             }
+
             $ins->close();
         }
+
         $stmt->close();
     }
 }
 ob_end_flush();
 ?>
+
 
 <!doctype html>
 <html lang="en">
@@ -56,12 +105,17 @@ ob_end_flush();
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sign Up — SkillShare</title>
-    <link rel="stylesheet" href="../assets/css/signup.css">
+    <link rel="stylesheet" href="../assets/css/pages/signup.css">
 </head>
 
 <body>
     <div class="topbar">
-        <span class="brand">SkillShare</span>
+        <span class="brand">
+            <a href="../index.php">
+                <img src="../assets/images/skillshare-logo.png" alt="SkillShare" style="height:48px;  width: auto; display:block;
+  object-fit:contain;">
+            </a>
+        </span>
     </div>
 
     <main class="center">
@@ -134,6 +188,8 @@ ob_end_flush();
             <div class="actions">
                 <button type="submit" class="btn">Sign Up</button>
             </div>
+
+
 
             <div class="footer-note">
                 Already have an account? <a href="login.php">Login</a><br>

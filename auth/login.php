@@ -1,7 +1,13 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 ob_start();
 session_start();
 require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
+
 
 $errors = [];
 
@@ -9,29 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = strtolower(trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Please enter a valid email.";
-    }
-    if ($password === '') {
-        $errors[] = "Password cannot be empty.";
-    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Please enter a valid email.";
+    if (empty($password)) $errors[] = "Password cannot be empty.";
 
     if (empty($errors)) {
         $stmt = $conn->prepare("SELECT user_id, user_name, password, role FROM users WHERE email = ?");
         $stmt->bind_param('s', $email);
         $stmt->execute();
-        $stmt->store_result();
+        $result = $stmt->get_result();
+        if ($user = $result->fetch_assoc()) {
+            if (password_verify($password, $user['password'])) {
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['user_role'] = $user['role'];
+                $_SESSION['user_name'] = $user['user_name'];
 
-        if ($stmt->num_rows === 1) {
-            $stmt->bind_result($user_id,$user_name, $hash, $role);
-            $stmt->fetch();
+                logActivity($conn, $_SESSION['user_id'], 'Logged in');
 
-            if (password_verify($password, $hash)) {
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['user_role'] = $role;
-                $_SESSION['user_name'] = $user_name; 
-                header("Location: ../dashboard/{$_SESSION['user_role']}_dashboard.php");
-                exit;
+                header("Location: ../dashboard/{$user['role']}_dashboard.php");
+                exit();
             } else {
                 $errors[] = "Incorrect password.";
             }
@@ -44,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_end_flush();
 ?>
 
+
 <!doctype html>
 <html lang="en">
 
@@ -51,16 +53,18 @@ ob_end_flush();
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Login — SkillShare</title>
-    <link rel="stylesheet" href="../assets/css/login.css">
+    <link rel="stylesheet" href="../assets/css/pages/login.css">
 </head>
 
 <body>
-    <div class="topbar">
-        <span class="brand">SkillShare</span>
-    </div>
+    <header class="topbar">
+        <a href="../index.php" class="brand">
+            <img src="../assets/images/skillshare-logo.png" alt="SkillShare" style="height:48px; width:auto; display:block; object-fit:contain;">
+        </a>
+    </header>
 
     <!-- Wrapper ensures vertical centering like login page -->
-    <div class="login-wrapper">
+    <div class=" login-wrapper">
         <form class="login-form" method="POST" novalidate>
             <h2>User Login</h2>
 
@@ -94,7 +98,7 @@ ob_end_flush();
             </div>
 
             <div class="footer-note">
-                Don't have an account? <a href="signup.php">Sign Up</a><br>
+                Need an account? <a href="signup.php">Sign Up</a><br>
                 <a href="../index.php">Back to Home Page</a>
             </div>
         </form>

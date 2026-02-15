@@ -1,51 +1,74 @@
 <?php
-include('../../includes/config.php');
+// admin_login.php
 session_start();
+require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../models/User.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+// Redirect if already logged in
+if (isset($_SESSION['admin_id'])) {
+    header('Location: ../dashboard/admin_dashboard.php');
+    exit;
+}
 
-    // Fetch admin user
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email=? AND role='admin'");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
+$errors = [];
 
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = strtolower(trim($_POST['email'] ?? ''));
+    $password = trim($_POST['password'] ?? '');
 
-        // Verify password
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role'] = 'admin';
-            header("Location: ../../dashboard/admin_dashboard.php");
-            exit();
-        } else {
-            $error = "Incorrect password.";
-        }
-    } else {
-        $error = "Admin not found.";
+    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Enter a valid email address.";
     }
+    if (!$password) {
+        $errors[] = "Password is required.";
+    }
+
+    if (empty($errors)) {
+    $user = User::getByEmail($conn, $email);
+
+    if ($user && $user->role === 'admin' && password_verify($password, $user->password)) {
+        // Successful login
+        $_SESSION['admin_id'] = $user->user_id;
+        $_SESSION['admin_name'] = $user->user_name;
+        logActivity($user->user_id, $user->user_name, "login", "Admin logged in");
+
+        header('Location: ../dashboard/admin_dashboard.php');
+        exit;
+    } else {
+        $errors[] = "Invalid credentials or not an admin.";
+    }
+}
+
 }
 ?>
 
+<!-- HTML Part -->
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <title>Admin Login</title>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 
 <body>
-    <h2>Admin Login</h2>
-    <?php if (isset($error)) echo "<p style='color:red;'>$error</p>"; ?>
-    <form method="post">
-        <input type="email" name="email" placeholder="Email" required><br>
-        <input type="password" name="password" placeholder="Password" required><br>
-        <button type="submit">Login</button>
-    </form>
+    <div class="login-container">
+        <h2>Admin Login</h2>
+        <?php if (!empty($errors)): ?>
+            <div class="error-messages">
+                <?php foreach ($errors as $err): ?>
+                    <p><?= htmlspecialchars($err) ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+        <form method="POST" action="">
+            <input type="email" name="email" placeholder="Email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
 </body>
 
 </html>

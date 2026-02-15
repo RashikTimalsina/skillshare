@@ -1,243 +1,208 @@
 <?php
-session_start();
-include('../includes/functions.php');
-include('../includes/config.php');
-include('../middlewares/session_check.php');
-require_once __DIR__ . '/../models/Enrollment.php';
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+session_start();
 
-if (!isset($_SESSION['user_role'])) {
-    header("Location: ../index.php");
-    exit();
-}
+include('../includes/functions.php');
+include('../includes/config.php');
+include('../middlewares/session_check.php');
+include('../middlewares/role_check.php');
+require_once('../includes/flash_messages.php'); // <-- Include flash handler
+
+allowRoles(['admin', 'learner', 'teacher']);
+
+require_once '../models/Enrollment.php';
+require_once '../models/User.php';
+require_once '../models/Skill.php';
 
 $role = $_SESSION['user_role'];
 $userId = $_SESSION['user_id'];
 $userName = $_SESSION['user_name'] ?? 'Unknown';
 
-// Fetch users & skills for dropdowns
-$usersRes = $conn->query("SELECT user_id, user_name FROM users ORDER BY user_name ASC");
-$skillsRes = $conn->query("SELECT skill_id, skill_name FROM skills ORDER BY skill_name ASC");
+// --- Handle Learner Enrollment ---
+if ($role === 'learner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enroll_skill'])) {
+    $skillId = $_POST['skills_skill_id'] ?? null;
 
-$usersOptions = '';
-if ($usersRes && $usersRes->num_rows > 0) {
-    while ($user = $usersRes->fetch_assoc()) {
-        $usersOptions .= '<option value="' . $user['user_id'] . '">' . htmlspecialchars($user['user_name']) . '</option>';
+    if ($skillId) {
+        $res = Enrollment::create($conn, [
+            'users_user_id' => $userId,
+            'skills_skill_id' => $skillId,
+            'status' => 'enrolled'
+        ]);
+
+        if ($res) {
+            setFlash('enrollments', 'success', 'Successfully enrolled.');
+        } else {
+            setFlash('enrollments', 'warning', 'You are already enrolled in this skill.');
+        }
+    } else {
+        setFlash('enrollments', 'error', 'Invalid skill selection.');
     }
+
+    header("Location: enrollments.php");
+    exit();
 }
 
-$skillsOptions = '';
-if ($skillsRes && $skillsRes->num_rows > 0) {
-    while ($skill = $skillsRes->fetch_assoc()) {
-        $skillsOptions .= '<option value="' . $skill['skill_id'] . '">' . htmlspecialchars($skill['skill_name']) . '</option>';
+// --- Handle Teacher Status Update ---
+if ($role === 'teacher' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
+    $enrollmentId = $_POST['enrollment_id'] ?? null;
+    $status = $_POST['status'] ?? null;
+
+    if ($enrollmentId && $status) {
+        $stmt = $conn->prepare("
+            SELECT e.enrollment_id 
+            FROM enrollments e
+            JOIN skills s ON e.skills_skill_id = s.skill_id
+            JOIN teachers t ON s.skill_id = t.skills_skill_id
+            WHERE e.enrollment_id=? AND t.users_user_id=?
+        ");
+        $stmt->bind_param("ii", $enrollmentId, $userId);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            Enrollment::updateStatus($conn, $enrollmentId, $status);
+            setFlash('enrollments', 'success', 'Enrollment status updated.');
+        } else {
+            setFlash('enrollments', 'error', 'Unauthorized or invalid enrollment update attempt.');
+        }
+
+        $stmt->close();
+    } else {
+        setFlash('enrollments', 'error', 'Missing enrollment data.');
     }
-}
 
-// Handle Add Enrollment
-if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_enrollment'])) {
-    $data = [
-        'users_user_id' => $_POST['users_user_id'],
-        'skills_skill_id' => $_POST['skills_skill_id'],
-        'status' => $_POST['status']
-    ];
-    Enrollment::create($conn, $data, $userId, $userName);
     header("Location: enrollments.php");
     exit();
 }
 
-// Handle Edit Enrollment
-if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_enrollment'])) {
-    $enrollment_id = $_POST['enrollment_id'];
-    $data = [
-        'users_user_id' => $_POST['users_user_id'],
-        'skills_skill_id' => $_POST['skills_skill_id'],
-        'status' => $_POST['status']
-    ];
-    Enrollment::update($conn, $enrollment_id, $data, $userId, $userName);
-    header("Location: enrollments.php");
-    exit();
-}
+// --- Fetch enrollments ---
+$enrollments = [];
 
-// Handle Delete Enrollment
-if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_enrollment'])) {
-    $enrollment_id = $_POST['enrollment_id'];
-    Enrollment::delete($conn, $enrollment_id, $userId, $userName);
-    header("Location: enrollments.php");
-    exit();
-}
-
-// Search & Sort
-$search = $_GET['search'] ?? '';
-$sort = strtoupper($_GET['sort'] ?? 'ASC');
-$sort = $sort === 'DESC' ? 'DESC' : 'ASC';
-
-$sql = "SELECT e.enrollment_id, e.users_user_id, u.user_name, e.skills_skill_id, s.skill_name, e.status, e.enrolled_at
+if ($role === 'admin') {
+    $res = $conn->query("
+        SELECT e.enrollment_id, e.users_user_id, e.skills_skill_id, e.status, e.enrolled_at
         FROM enrollments e
-        JOIN users u ON e.users_user_id = u.user_id
-        JOIN skills s ON e.skills_skill_id = s.skill_id
-        WHERE CAST(e.enrollment_id AS CHAR) LIKE ? 
-           OR u.user_name LIKE ? 
-           OR s.skill_name LIKE ?
-        ORDER BY e.enrollment_id $sort";
+        ORDER BY e.enrolled_at DESC
+    ");
+    while ($row = $res->fetch_assoc()) {
+        $enrollments[] = (object) $row;
+    }
+} elseif ($role === 'learner') {
+    $enrollments = Enrollment::getByUserId($conn, $userId);
+} elseif ($role === 'teacher') {
+    $enrollments = Enrollment::getByTeacherSkills($conn, $userId);
+}
 
-$stmt = $conn->prepare($sql);
-$searchParam = "%$search%";
-$stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
-$stmt->execute();
-$result = $stmt->get_result();
+// --- Fetch skills for learner dropdown ---
+$skillsOptions = '';
+if ($role === 'learner') {
+    $res = $conn->query("
+        SELECT s.skill_id, s.skill_name
+        FROM skills s
+        JOIN teachers t 
+            ON t.skills_skill_id = s.skill_id
+            AND t.status = 'active'
+        ORDER BY s.skill_name ASC
+    ");
 
-// Editing check
-$edit_enrollment_id = $_GET['edit'] ?? null;
-$edit_enrollment = $edit_enrollment_id ? Enrollment::getById($conn, $edit_enrollment_id) : null;
+    while ($s = $res->fetch_assoc()) {
+        $skillsOptions .= "<option value='" . htmlspecialchars($s['skill_id']) . "'>"
+            . htmlspecialchars($s['skill_name']) . "</option>";
+    }
+}
 ?>
 
 <?php include('../includes/layouts/header.php'); ?>
 <link rel="stylesheet" href="../assets/css/layout.css">
-<link rel="stylesheet" href="../assets/css/enrollments.css">
+<link rel="stylesheet" href="../assets/css/pages/enrollments.css">
 
 <div class="layout-wrapper">
     <?php include('../includes/layouts/sidebar.php'); ?>
     <div class="main-content-wrapper">
         <?php include('../includes/layouts/topbar.php'); ?>
-
         <div class="main-content">
-            <div class="page-header">
-                <h2>Enrollments</h2>
-            </div>
+            <h2>Enrollments</h2>
 
-            <!-- Search & Sort -->
-            <div class="search-sort-container">
-                <form method="GET" class="search-sort-form">
-                    <input class="search-input" type="text" name="search" placeholder="Search by ID or User/Skill" value="<?= htmlspecialchars($search) ?>">
-                    <select class="sort-select" name="sort">
-                        <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>1 →</option>
-                        <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>><- 1</option>
-                    </select>
-                    <button class="search-btn" type="submit">Apply</button>
-                </form>
-            </div>
+            <!-- PAGE-SPECIFIC FLASH MESSAGES -->
+            <?php showFlash('enrollments'); ?>
 
-            <!-- Enrollments Table -->
             <div class="table-container">
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>User</th>
+                            <?php if ($role === 'admin'): ?><th>ID</th><?php endif; ?>
+                            <th>Learner</th>
                             <th>Skill</th>
                             <th>Status</th>
                             <th>Enrolled At</th>
-                            <?php if ($role === 'admin') echo '<th>Actions</th>'; ?>
+                            <?php if ($role === 'teacher'): ?><th>Action</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($result->num_rows > 0): ?>
-                            <?php while ($row = $result->fetch_assoc()): ?>
+                        <?php if (!empty($enrollments)): ?>
+                            <?php foreach ($enrollments as $enr): ?>
+                                <?php
+                                $enrObj = is_array($enr) ? (object) $enr : $enr;
+
+                                if ($role === 'learner') {
+                                    $user = (object)['user_name' => $userName];
+                                } else {
+                                    $user = User::getById($conn, $enrObj->users_user_id ?? 0);
+                                    if (!$user) $user = (object)['user_name' => 'Unknown'];
+                                }
+
+                                $skill = Skill::getById($conn, $enrObj->skills_skill_id ?? 0);
+                                if (!$skill) $skill = (object)['skill_name' => 'Unknown'];
+                                ?>
                                 <tr>
-                                    <?php if ($role === 'admin' && $edit_enrollment_id == $row['enrollment_id']): ?>
-                                        <form method="POST">
-                                            <td><?= $row['enrollment_id'] ?></td>
-                                            <td>
-                                                <input type="hidden" name="enrollment_id" value="<?= $row['enrollment_id'] ?>">
-                                                <select name="users_user_id" required><?= $usersOptions ?></select>
-                                            </td>
-                                            <td><select name="skills_skill_id" required><?= $skillsOptions ?></select></td>
-                                            <td>
-                                                <select name="status" required>
-                                                    <?php
-                                                    $statuses = ['none', 'enrolled', 'completed', 'dropped'];
-                                                    foreach ($statuses as $s) {
-                                                        $selected = $s === $row['status'] ? 'selected' : '';
-                                                        echo "<option value='$s' $selected>$s</option>";
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </td>
-                                            <td><?= $row['enrolled_at'] ?></td>
-                                            <td>
-                                                <button type="submit" name="edit_enrollment" class="action-link">Save</button>
-                                                <a href="enrollments.php" class="action-link delete">Cancel</a>
-                                            </td>
-                                        </form>
-                                    <?php else: ?>
-                                        <td><?= $row['enrollment_id'] ?></td>
-                                        <td><?= htmlspecialchars($row['user_name']) ?></td>
-                                        <td><?= htmlspecialchars($row['skill_name']) ?></td>
-                                        <td><?= ucfirst($row['status']) ?></td>
-                                        <td><?= $row['enrolled_at'] ?></td>
-                                        <?php if ($role === 'admin'): ?>
-                                            <td>
-                                                <a href="?edit=<?= $row['enrollment_id'] ?>" class="action-link">✏️ Edit</a>
-                                                <form method="POST" class="delete-enrollment-form" style="display:inline-block;">
-                                                    <input type="hidden" name="enrollment_id" value="<?= $row['enrollment_id'] ?>">
-                                                    <button type="submit" name="delete_enrollment" class="action-link delete">🗑️ Delete</button>
+                                    <?php if ($role === 'admin'): ?>
+                                        <td><?= htmlspecialchars($enrObj->enrollment_id ?? '') ?></td>
+                                    <?php endif; ?>
+                                    <td><?= htmlspecialchars($user->user_name) ?></td>
+                                    <td><?= htmlspecialchars($skill->skill_name) ?></td>
+                                    <td><?= htmlspecialchars(ucfirst($enrObj->status ?? '')) ?></td>
+                                    <td><?= htmlspecialchars($enrObj->enrolled_at ?? '') ?></td>
+
+                                    <?php if ($role === 'teacher'): ?>
+                                        <td>
+                                            <?php if (($enrObj->status ?? '') === 'enrolled'): ?>
+                                                <form method="POST">
+                                                    <input type="hidden" name="enrollment_id" value="<?= htmlspecialchars($enrObj->enrollment_id ?? '') ?>">
+                                                    <select name="status" required>
+                                                        <option value="enrolled" selected>Enrolled</option>
+                                                        <option value="completed">Completed</option>
+                                                        <option value="dropped">Dropped</option>
+                                                    </select>
+                                                    <button type="submit" name="update_status" style="background-color: #9959e3; color:aliceblue; margin-top:10px">Update</button>
                                                 </form>
-                                            </td>
-                                        <?php endif; ?>
+                                            <?php else: ?>
+                                                <span><?= ucfirst($enrObj->status) ?></span>
+                                            <?php endif; ?>
+                                        </td>
                                     <?php endif; ?>
                                 </tr>
-                            <?php endwhile; ?>
+                            <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="<?= $role === 'admin' ? 6 : 5 ?>" style="text-align:center;">No enrollments found.</td>
+                                <td colspan="<?= $role === 'teacher' ? 6 : 5 ?>" style="text-align:center;">
+                                    No enrollments found.
+                                </td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Add Enrollment Button -->
-            <?php if ($role === 'admin'): ?>
-                <div class="bottom-buttons">
-                    <button id="addEnrollmentBtn" class="add-user-btn" type="button">+ Add Enrollment</button>
-                </div>
-
-                <script>
-                    const addBtn = document.getElementById('addEnrollmentBtn');
-                    const tbody = document.querySelector('.users-table tbody');
-                    const usersDropdown = `<?= $usersOptions ?>`;
-                    const skillsDropdown = `<?= $skillsOptions ?>`;
-
-                    addBtn.addEventListener('click', () => {
-                        if (document.querySelector('.new-enrollment-row')) return;
-
-                        const tr = document.createElement('tr');
-                        tr.classList.add('new-enrollment-row');
-                        tr.innerHTML = `
-                    <form method="POST">
-                        <td>New</td>
-                        <td><select name="users_user_id" required>${usersDropdown}</select></td>
-                        <td><select name="skills_skill_id" required>${skillsDropdown}</select></td>
-                        <td>
-                            <select name="status" required>
-                                <option value="none">none</option>
-                                <option value="enrolled">enrolled</option>
-                                <option value="completed">completed</option>
-                                <option value="dropped">dropped</option>
-                            </select>
-                        </td>
-                        <td>Auto</td>
-                        <td>
-                            <button type="submit" name="add_enrollment" class="action-link">Save</button>
-                            <button type="button" class="action-link cancel">Cancel</button>
-                        </td>
-                    </form>
-                `;
-                        tbody.prepend(tr);
-
-                        tr.querySelector('.cancel').addEventListener('click', () => tr.remove());
-                    });
-
-                    // Delete confirmation
-                    document.querySelectorAll('.delete-enrollment-form').forEach(f => {
-                        f.addEventListener('submit', e => {
-                            if (!confirm('Are you sure you want to delete this enrollment?')) e.preventDefault();
-                        });
-                    });
-                </script>
+            <?php if ($role === 'learner'): ?>
+                <form method="POST" class="learner-enroll-form">
+                    <select name="skills_skill_id" required>
+                        <option value="">Select Skill to Enroll</option>
+                        <?= $skillsOptions ?>
+                    </select>
+                    <button type="submit" name="enroll_skill">Enroll</button>
+                </form>
             <?php endif; ?>
 
         </div>

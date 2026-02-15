@@ -1,11 +1,12 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 include('../includes/functions.php');
 include('../includes/config.php');
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 // Only logged-in users
 if (!isset($_SESSION['user_role'])) {
@@ -34,6 +35,8 @@ $result = $stmt->get_result();
 <?php include('../includes/layouts/header.php'); ?>
 <?php include('../includes/layouts/sidebar.php'); ?>
 <?php include('../includes/layouts/topbar.php'); ?>
+
+
 
 <div class="main-content">
     <h2>Users Management</h2>

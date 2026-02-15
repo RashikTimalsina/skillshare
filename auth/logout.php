@@ -1,11 +1,17 @@
 <?php
 session_start();
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
-// If any user is logged in, destroy the session immediately
 if (isset($_SESSION['user_id'])) {
+    $userId = $_SESSION['user_id'];
+
+    // Log logout BEFORE destroying session
+    logActivity($conn, $userId, 'Logged out');
+
     session_unset();
     session_destroy();
 }
 
-header("Location: ../index.php");
+header("Location: ../auth/login.php");
 exit();

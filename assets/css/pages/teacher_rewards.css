@@ -1,0 +1,88 @@
+/* teacher_rewards.css */
+
+/* General layout adjustments */
+.main-content {
+    padding: 30px;
+    font-family: 'Inter', sans-serif;
+    background-color: #f9f9f9;
+    min-height: 80vh;
+}
+
+.page-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: #222;
+}
+
+.page-header p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 50px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    color: #777;
+    font-size: 16px;
+}
+
+/* Rewards grid */
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Reward card */
+.reward-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reward-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Points badge */
+.reward-card .points {
+    background: linear-gradient(90deg, #4caf50, #66bb6a);
+    color: #fff;
+    font-weight: 700;
+    font-size: 20px;
+    text-align: center;
+    padding: 15px 0;
+}
+
+/* Reward body */
+.reward-card .reward-body {
+    padding: 15px 20px;
+}
+
+.reward-card .reward-body .reason {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+    min-height: 50px;
+}
+
+.reward-card .reward-body .meta {
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.reward-card .reward-body .meta span {
+    margin-top: 5px;
+}
