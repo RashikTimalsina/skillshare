@@ -57,8 +57,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'feedback_given' => $feedback_given
         ]);
 
-        if ($id) logActivity($conn, $currentUserId, $currentUserName, "Created feedback ID $id");
+        if ($id && $skill_id) {
+            $skill = Skill::getById($conn, $skill_id);
+            $teacherName = 'Unknown Teacher';
 
+            // Fetch teacher offering this skill
+            $stmt = $conn->prepare("
+        SELECT u.user_name AS teacher_name
+        FROM teachers t
+        JOIN users u ON t.users_user_id = u.user_id
+        WHERE t.skills_skill_id = ?
+        AND t.status = 'active'
+        LIMIT 1
+    ");
+            $stmt->bind_param("i", $skill_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $teacherName = $row['teacher_name'] ?? 'Unknown Teacher';
+            }
+            $stmt->close();
+
+            logActivity(
+                $conn,
+                $currentUserId,
+                "Posted feedback for '{$skill->skill_name}' offered by '{$teacherName}'"
+            );
+        }
         $_SESSION['feedback_success'] = $id ? "Feedback submitted." : "Failed to submit feedback.";
         header("Location: feedbacks.php");
         exit();
@@ -95,7 +120,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'feedback_given' => $feedback_given
         ]);
 
-        if ($ok) logActivity($conn, $currentUserId, $currentUserName, "Edited feedback ID $feedback_id");
+        if ($ok && $existing) {
+            $skill = Skill::getById($conn, $existing->skills_skill_id);
+            $teacherName = 'Unknown Teacher';
+
+            $stmt = $conn->prepare("
+        SELECT u.user_name AS teacher_name
+        FROM teachers t
+        JOIN users u ON t.users_user_id = u.user_id
+        WHERE t.skills_skill_id = ?
+        AND t.status = 'active'
+        LIMIT 1
+    ");
+            $stmt->bind_param("i", $existing->skills_skill_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $teacherName = $row['teacher_name'] ?? 'Unknown Teacher';
+            }
+            $stmt->close();
+
+            logActivity(
+                $conn,
+                $currentUserId,
+                "Edited feedback for '{$skill->skill_name}' offered by '{$teacherName}'"
+            );
+        }
 
         $_SESSION['feedback_success'] = $ok ? "Feedback updated." : "Failed to update feedback.";
         header("Location: feedbacks.php");
@@ -120,7 +170,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $ok = Feedback::delete($conn, $feedback_id);
-        if ($ok) logActivity($conn, $currentUserId, $currentUserName, "Deleted feedback ID $feedback_id");
+        if ($ok && $existing) {
+            $skill = Skill::getById($conn, $existing->skills_skill_id);
+            $teacherName = 'Unknown Teacher';
+
+            $stmt = $conn->prepare("
+        SELECT u.user_name AS teacher_name
+        FROM teachers t
+        JOIN users u ON t.users_user_id = u.user_id
+        WHERE t.skills_skill_id = ?
+        AND t.status = 'active'
+        LIMIT 1
+    ");
+            $stmt->bind_param("i", $existing->skills_skill_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $teacherName = $row['teacher_name'] ?? 'Unknown Teacher';
+            }
+            $stmt->close();
+
+            logActivity(
+                $conn,
+                $currentUserId,
+                "Deleted feedback for '{$skill->skill_name}' offered by '{$teacherName}'"
+            );
+        }
         $_SESSION['feedback_success'] = $ok ? "Feedback deleted." : "Failed to delete feedback.";
         header("Location: feedbacks.php");
         exit();

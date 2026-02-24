@@ -155,7 +155,7 @@ ob_end_flush();
             <div class="field">
                 <label for="password">Password</label>
                 <input id="password" name="password" type="password"
-                    placeholder="Your Password (must be at least 8 characters)" required>
+                    placeholder="Your Password (must be at least 6 characters)" required>
             </div>
 
             <div class="field">

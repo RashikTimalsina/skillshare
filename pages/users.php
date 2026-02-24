@@ -1,6 +1,7 @@
 <!-- --------USER MANAGEMENT PAGE--------- -->
 
 <?php
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -37,7 +38,7 @@ if ($currentUserRole === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $stmt->close();
 
-            logActivity($conn, $currentUserId, $_SESSION['user_name'], "Updated user ID {$userId} status to {$newStatus}");
+            logActivity($conn, $currentUserId, "Updated teacher with ID {$userId} status to '{$newStatus}'");
         }
         header('Location: users.php');
         exit;
@@ -52,7 +53,7 @@ if ($currentUserRole === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $targetUser = User::getById($conn, $userId);
         if ($targetUser && $targetUser->role === 'none') {
             User::updateRole($conn, $userId, $role);
-            logActivity($conn, $currentUserId, $_SESSION['user_name'], "Assigned role '{$role}' to user ID {$userId}");
+            logActivity($conn, $currentUserId, "Assigned role '{$role}' to user ID {$userId}");
         }
         header('Location: users.php');
         exit;
@@ -151,7 +152,7 @@ include '../includes/layouts/header.php';
                                 <!-- Actions column now contains the toggle button -->
                                 <td>
                                     <?php if ($currentUserRole === 'admin' && $user->role === 'teacher'): ?>
-                                        <form method="POST" style="display:inline;">
+                                        <form method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure?');">
                                             <input type="hidden" name="user_id" value="<?= $user->user_id ?>">
                                             <input type="hidden" name="new_status" value="<?= $user->status === 'active' ? 'inactive' : 'active' ?>">
                                             <button type="submit" name="toggle_status" class="<?= $user->status === 'active' ? 'deactivate-btn' : 'activate-btn' ?>">

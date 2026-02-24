@@ -1,4 +1,9 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 ob_start();
 session_start();
 require_once __DIR__ . '/../includes/config.php';
@@ -38,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errors)) {
     $password = $_POST['password'] ?? '';
     $confirm  = $_POST['confirm_password'] ?? '';
 
-    if (strlen($password) < 8) {
-        $errors[] = "Password must be at least 8 characters.";
+    if (strlen($password) < 6) {
+        $errors[] = "Password must be at least 6 characters.";
     }
 
     if ($password !== $confirm) {

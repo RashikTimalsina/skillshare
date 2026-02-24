@@ -51,7 +51,7 @@ include '../includes/layouts/header.php';
                                     <td><?= date('d M Y', strtotime($cert['issued_date'])) ?></td>
                                     <td><?= htmlspecialchars($cert['certificate_code']) ?></td>
                                     <td>
-                                        <a href="view_certificate.php?id=<?= $cert['id'] ?>" target="_blank" style="color:#6c00bb;">View</a>
+                                        <a href="view_certificate.php?id=<?= $cert['id'] ?>" target="_blank" style="color:#6c00bb;">View Here</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

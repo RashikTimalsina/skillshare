@@ -25,21 +25,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-    $user = User::getByEmail($conn, $email);
+        $user = User::getByEmail($conn, $email);
 
-    if ($user && $user->role === 'admin' && password_verify($password, $user->password)) {
-        // Successful login
-        $_SESSION['admin_id'] = $user->user_id;
-        $_SESSION['admin_name'] = $user->user_name;
-        logActivity($user->user_id, $user->user_name, "login", "Admin logged in");
-
-        header('Location: ../dashboard/admin_dashboard.php');
-        exit;
-    } else {
-        $errors[] = "Invalid credentials or not an admin.";
+        if ($user && $user->role === 'admin' && password_verify($password, $user->password)) {
+            // Successful login
+            $_SESSION['admin_id'] = $user->user_id;
+            $_SESSION['admin_name'] = $user->user_name;
+            logActivity($conn, $user->user_id, "Admin logged in");
+            header('Location: ../dashboard/admin_dashboard.php');
+            exit;
+        } else {
+            $errors[] = "Invalid credentials or not an admin.";
+        }
     }
-}
-
 }
 ?>
 

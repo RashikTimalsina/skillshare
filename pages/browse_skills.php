@@ -13,27 +13,58 @@ require_once __DIR__ . '/../includes/layouts/header.php';
 $userId   = $_SESSION['user_id'] ?? null;
 $userRole = $_SESSION['user_role'] ?? null;
 
-/* Handle enrollment POST */
+// --- Handle enrollment POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['skill_id']) && $userId) {
     if ($userRole !== 'learner') {
         $_SESSION['error'] = 'Only learners can enroll in skills.';
         header('Location: ../unauthorized.php');
         exit;
     }
+
     $skillId = (int) $_POST['skill_id'];
 
+    // Check if already enrolled
     $check = $conn->prepare("SELECT 1 FROM enrollments WHERE users_user_id = ? AND skills_skill_id = ?");
     $check->bind_param("ii", $userId, $skillId);
     $check->execute();
 
     if ($check->get_result()->num_rows === 0) {
+        // Insert enrollment
         $stmt = $conn->prepare("INSERT INTO enrollments (users_user_id, skills_skill_id, status, enrolled_at) VALUES (?, ?, 'enrolled', NOW())");
         $stmt->bind_param("ii", $userId, $skillId);
         $stmt->execute();
         $stmt->close();
 
-        // Flash message for enrollments page
+        // Fetch skill details for activity log
         require_once __DIR__ . '/../includes/flash_messages.php';
+        require_once __DIR__ . '/../models/Skill.php';
+        $skill = Skill::getById($conn, $skillId);
+
+        if ($skill) {
+            // Fetch teacher name for this skill
+            $stmt = $conn->prepare("
+        SELECT u.user_name AS teacher_name
+        FROM teachers t
+        JOIN users u ON t.users_user_id = u.user_id
+        WHERE t.skills_skill_id = ?
+        AND t.status = 'active'
+        LIMIT 1
+    ");
+            $stmt->bind_param("i", $skillId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $teacherData = $result->fetch_assoc();
+            $stmt->close();
+
+            $teacherName = $teacherData['teacher_name'] ?? 'Unknown Teacher';
+
+            logActivity(
+                $conn,
+                $userId,
+                "Enrolled in skill '{$skill->skill_name}' offered by '{$teacherName}'"
+            );
+        }
+
         setFlash('enrollments', 'success', 'Successfully enrolled in the skill!');
     } else {
         require_once __DIR__ . '/../includes/flash_messages.php';

@@ -26,11 +26,6 @@ require_once __DIR__ . '/../models/Skill.php';
 $learner_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'] ?? 'Learner';
 
-// Activity logging (once per session)
-if (!isset($_SESSION['learner_dashboard_visited'])) {
-    logLearnerActivity($conn, $learner_id, "Visited Learner Dashboard");
-    $_SESSION['learner_dashboard_visited'] = true;
-}
 
 
 // ==============================

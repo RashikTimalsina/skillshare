@@ -125,6 +125,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
             $stmt->execute();
             $stmt->close();
         }
+        // ================= ACTIVITY LOGGING =================
+
+        // Get sender name
+        $stmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->bind_result($sender_name);
+        $stmt->fetch();
+        $stmt->close();
+
+        // Get receiver name
+        $stmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
+        $stmt->bind_param("i", $receiver_id);
+        $stmt->execute();
+        $stmt->bind_result($receiver_name);
+        $stmt->fetch();
+        $stmt->close();
+
+        // 1️⃣ Sender Activity
+        logActivity(
+            $conn,
+            $user_id,
+            "Sent message to '{$receiver_name}'"
+        );
+
+        // 2️⃣ Receiver Activity
+        logActivity(
+            $conn,
+            $receiver_id,
+            "Received message from '{$sender_name}'"
+        );
+
+        // 3️⃣ Admin Activity (All Admins)
+        $adminRes = $conn->query("SELECT user_id FROM users WHERE role = 'admin'");
+        while ($admin = $adminRes->fetch_assoc()) {
+            logActivity(
+                $conn,
+                $admin['user_id'],
+                "{$sender_name} sent message to {$receiver_name}"
+            );
+        }
     }
 
     // Only redirect if no errors, else show them
@@ -189,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
                             <?php foreach ($conversations as $conv): ?>
                                 <li class="<?= ($active_receiver_id == $conv['user_id']) ? 'active' : '' ?>">
                                     <a href="messages.php?receiver_id=<?= $conv['user_id'] ?>" style="text-decoration:none">
-                                        <?= htmlspecialchars($conv['user_name']) ?><?php if ($conv['role'] === 'admin') echo ' (Admin)'; ?>
+                                        <?= htmlspecialchars($conv['user_name']) ?><?php if ($conv['role'] === 'admin') ?>
                                         <?php if ($conv['unread_count'] > 0): ?><span class="unread-count"><?= $conv['unread_count'] ?></span><?php endif; ?>
                                     </a>
                                 </li>
@@ -205,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
                                 foreach ($conversations as $conv) {
                                     if ($conv['user_id'] == $active_receiver_id) {
                                         echo htmlspecialchars($conv['user_name']);
-                                        if ($conv['role'] === 'admin') echo ' (Admin)';
+                                        if ($conv['role'] === 'admin') ;
                                         break;
                                     }
                                 }

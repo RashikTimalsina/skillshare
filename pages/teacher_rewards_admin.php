@@ -1,7 +1,13 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../middlewares/auth_check.php';
 require_once __DIR__ . '/../middlewares/role_check.php';
+require_once __DIR__ . '/../includes/functions.php'; 
 require_once __DIR__ . '/../models/TeacherReward.php';
 require_once __DIR__ . '/../includes/flash_messages.php';
 
@@ -15,7 +21,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($teacherId <= 0 || $points <= 0 || empty($reason)) {
         setFlash('teacher_rewards_admin', 'error', 'Invalid reward data.');
     } else {
+        // Award reward
         TeacherReward::award($conn, $teacherId, $points, $reason, $_SESSION['user_id']);
+
+        // --- Fetch teacher + skill details ---
+        $stmt = $conn->prepare("
+        SELECT u.user_id, u.user_name, s.skill_name
+        FROM teachers t
+        JOIN users u ON u.user_id = t.users_user_id
+        LEFT JOIN skills s ON s.skill_id = t.skills_skill_id
+        WHERE t.id = ?
+        LIMIT 1
+    ");
+        $stmt->bind_param("i", $teacherId);
+        $stmt->execute();
+        $data = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($data) {
+            $teacherUserId = $data['user_id'];
+            $teacherName   = $data['user_name'] ?? 'Unknown Teacher';
+            $skillName     = $data['skill_name'] ?? 'Unknown Skill';
+
+            // --- 1. Admin Activity ---
+            logActivity(
+                $conn,
+                $_SESSION['user_id'], // admin
+                "Assigned {$points} reward points to teacher: '{$teacherName}' skill: '{$skillName}'"
+            );
+
+            // --- 2. Teacher Activity ---
+            logActivity(
+                $conn,
+                $teacherUserId,
+                "Earned {$points} reward points for skill: '{$skillName}'"
+            );
+        }
+
         setFlash('teacher_rewards_admin', 'success', 'Reward awarded successfully.');
     }
 

@@ -8,7 +8,7 @@ include('../includes/functions.php');
 include('../includes/config.php');
 include('../middlewares/session_check.php');
 include('../middlewares/role_check.php');
-require_once('../includes/flash_messages.php'); // <-- Include flash handler
+require_once('../includes/flash_messages.php'); 
 
 allowRoles(['admin', 'learner', 'teacher']);
 
@@ -31,8 +31,37 @@ if ($role === 'learner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST
             'status' => 'enrolled'
         ]);
 
+        // Fetch skill details for activity log
+        $skill = Skill::getById($conn, $skillId);
+
         if ($res) {
             setFlash('enrollments', 'success', 'Successfully enrolled.');
+
+            // Only log if skill exists
+            if ($skill) {
+                // Fetch teacher offering this skill
+                $stmt = $conn->prepare("
+        SELECT u.user_name AS teacher_name
+        FROM teachers t
+        JOIN users u ON t.users_user_id = u.user_id
+        WHERE t.skills_skill_id = ?
+        AND t.status = 'active'
+        LIMIT 1
+    ");
+                $stmt->bind_param("i", $skillId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $teacherData = $result->fetch_assoc();
+                $stmt->close();
+
+                $teacherName = $teacherData['teacher_name'] ?? 'Unknown Teacher';
+
+                logActivity(
+                    $conn,
+                    $userId,
+                    "Enrolled in skill '{$skill->skill_name}' offered by '{$teacherName}'"
+                );
+            }
         } else {
             setFlash('enrollments', 'warning', 'You are already enrolled in this skill.');
         }
@@ -44,31 +73,82 @@ if ($role === 'learner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST
     exit();
 }
 
+
 // --- Handle Teacher Status Update ---
 if ($role === 'teacher' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $enrollmentId = $_POST['enrollment_id'] ?? null;
     $status = $_POST['status'] ?? null;
 
     if ($enrollmentId && $status) {
+        // --- FIXED: fetch user_name and skill_name for activity logging ---
         $stmt = $conn->prepare("
-            SELECT e.enrollment_id 
+            SELECT e.enrollment_id, s.skill_name, u.user_name
             FROM enrollments e
             JOIN skills s ON e.skills_skill_id = s.skill_id
+            JOIN users u ON e.users_user_id = u.user_id
             JOIN teachers t ON s.skill_id = t.skills_skill_id
-            WHERE e.enrollment_id=? AND t.users_user_id=?
+            WHERE e.enrollment_id = ? AND t.users_user_id = ?
+            LIMIT 1
         ");
         $stmt->bind_param("ii", $enrollmentId, $userId);
         $stmt->execute();
-        $stmt->store_result();
+        $result = $stmt->get_result();
+        $enrData = $result->fetch_assoc(); // <-- FETCH data here
+        $stmt->close();
 
-        if ($stmt->num_rows > 0) {
+        if ($enrData) {
             Enrollment::updateStatus($conn, $enrollmentId, $status);
             setFlash('enrollments', 'success', 'Enrollment status updated.');
+
+            // --- FIXED: use fetched data for activity log ---
+            $learnerName = $enrData['user_name'] ?? 'Unknown Learner';
+            $skillName = $enrData['skill_name'] ?? 'Unknown Skill';
+            logActivity(
+                $conn,
+                $userId,
+                "Updated enrollment status to '{$status}' : '{$learnerName}' - '{$skillName}'"
+            );
+
+            // --- Certificate activity logging ---
+            if ($status === 'completed') {
+
+                // --- 1. Teacher Activity ---
+                logActivity(
+                    $conn,
+                    $userId, // teacher updating status
+                    "Certificate issued to '{$learnerName}' for Skill '{$skillName}'"
+                );
+
+                // --- 2. Learner Activity ---
+                $learnerIdStmt = $conn->prepare("SELECT users_user_id FROM enrollments WHERE enrollment_id = ?");
+                $learnerIdStmt->bind_param("i", $enrollmentId);
+                $learnerIdStmt->execute();
+                $learnerIdRes = $learnerIdStmt->get_result()->fetch_assoc();
+                $learnerIdStmt->close();
+
+                $learnerId = $learnerIdRes['users_user_id'] ?? null;
+                if ($learnerId) {
+                    logActivity(
+                        $conn,
+                        $learnerId,
+                        "Certificate earned for Skill '{$skillName}' offered by: '{$userName}'"
+                    );
+                }
+
+                // --- 3. Admin Activity ---
+                $adminRes = $conn->query("SELECT user_id FROM users WHERE role='admin'");
+                while ($admin = $adminRes->fetch_assoc()) {
+                    logActivity(
+                        $conn,
+                        $admin['user_id'],
+                        "Certificate issued to '{$learnerName}' for Skill '{$skillName}'."
+                    );
+                }
+            }
+
         } else {
             setFlash('enrollments', 'error', 'Unauthorized or invalid enrollment update attempt.');
         }
-
-        $stmt->close();
     } else {
         setFlash('enrollments', 'error', 'Missing enrollment data.');
     }
@@ -86,6 +166,7 @@ if ($role === 'admin') {
         FROM enrollments e
         ORDER BY e.enrolled_at DESC
     ");
+
     while ($row = $res->fetch_assoc()) {
         $enrollments[] = (object) $row;
     }

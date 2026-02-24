@@ -19,7 +19,13 @@ $userName = $_SESSION['user_name'] ?? '';
 // --- Fetch teacher status if role is teacher ---
 $teacherStatus = null;
 if ($role === 'teacher') {
-    $stmt = $conn->prepare("SELECT status FROM teachers WHERE users_user_id=? LIMIT 1");
+    $stmt = $conn->prepare("
+    SELECT status 
+    FROM teachers 
+    WHERE users_user_id=? 
+    ORDER BY FIELD(status, 'active','inactive','none') ASC
+    LIMIT 1
+");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $teacher = $stmt->get_result()->fetch_assoc();
@@ -30,6 +36,7 @@ if ($role === 'teacher') {
 // --- Handle "Request Approval" button ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_approval'])) {
     setFlash('skills', 'success', "Your approval request is already visible to admins. Please wait for approval.");
+    logActivity($conn, $userId, "Requested account approval to create skills");
     header("Location: skills.php");
     exit();
 }
@@ -55,7 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStat
                 'categories_category_id' => $categoryId
             ];
             $newSkillId = Skill::create($conn, $data, $userId, $_FILES);
-            setFlash('skills', 'success', $newSkillId ? "Skill '{$skillName}' added successfully!" : "Skill '{$skillName}' already exists!");
+            if ($newSkillId) {
+                setFlash('skills', 'success', "Skill '{$skillName}' added successfully!");
+                logActivity($conn, $userId, "Added new skill '{$skillName}'");
+            } else {
+                setFlash('skills', 'success', "Skill '{$skillName}' already exists!");
+            }
         } catch (Throwable $e) {
             setFlash('skills', 'error', "Error adding skill: " . $e->getMessage());
         }
@@ -81,7 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStat
             ];
             try {
                 $updated = Skill::update($conn, $skillId, $data, $_FILES);
-                setFlash('skills', 'success', $updated ? "Skill updated successfully!" : "Cannot update, duplicate name!");
+                if ($updated) {
+                    setFlash('skills', 'success', "Skill updated successfully!");
+                    logActivity($conn, $userId, "Updated skill '{$skillName}'");
+                } else {
+                    setFlash('skills', 'success', "Cannot update, duplicate name!");
+                }
             } catch (Throwable $e) {
                 setFlash('skills', 'error', "Error updating skill: " . $e->getMessage());
             }
@@ -98,8 +115,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStat
         if (!Skill::isOwnedByUser($conn, $skillId, $userId)) {
             setFlash('skills', 'error', "Unauthorized action!");
         } else {
+
+            // Fetch skill info before deletion
+            $skill = Skill::getById($conn, $skillId);
+
             $deleted = Skill::delete($conn, $skillId);
-            setFlash('skills', 'success', $deleted ? "Skill deleted successfully!" : "Failed to delete!");
+            if ($deleted) {
+                setFlash('skills', 'success', "Skill deleted successfully!");
+                if ($skill) {
+                    logActivity($conn, $userId, "Deleted skill '{$skill->skill_name}'");
+                }
+            } else {
+                setFlash('skills', 'error', "Failed to delete!");
+            }
         }
 
         header("Location: skills.php");

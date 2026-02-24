@@ -5,9 +5,9 @@ error_reporting(E_ALL);
 
 ob_start();
 session_start();
+
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/functions.php';
-
 
 $errors = [];
 
@@ -63,7 +63,7 @@ ob_end_flush();
         </a>
     </header>
 
-    <!-- Wrapper ensures vertical centering like login page -->
+
     <div class=" login-wrapper">
         <form class="login-form" method="POST" novalidate>
             <h2>User Login</h2>

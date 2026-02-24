@@ -87,7 +87,7 @@ $topbar_icons = [
                         elseif ($_SESSION['user_role'] === 'teacher') echo '../dashboard/teacher_dashboard.php';
                         else echo '../dashboard/learner_dashboard.php';
                         ?>" class="topbar-title">
-                <?= htmlspecialchars($dashboard_title) ?>  
+                <?= htmlspecialchars($dashboard_title) ?>
             </a>
 
         </div>

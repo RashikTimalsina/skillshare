@@ -1,7 +1,4 @@
-<!-- // ==========================================
-// pages/teacher_skills.php
-// Teacher-specific skills listing
-// ========================================== -->
+<!-- // ===================MY SKILLS PAGE=======================-->
 
 <?php
 
@@ -15,7 +12,7 @@ require_once '../middlewares/session_check.php';
 require_once '../middlewares/role_check.php';
 require_once '../models/Teacher.php';
 require_once '../models/Skill.php';
-require_once('../includes/flash_messages.php'); 
+require_once('../includes/flash_messages.php');
 
 
 // Allow only teachers
@@ -112,7 +109,7 @@ include '../includes/layouts/header.php';
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5">You have not added any skills yet.</td>
+                                <td colspan="5" style="text-align:center;">You have not added any skills yet.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

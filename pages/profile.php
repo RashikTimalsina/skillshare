@@ -44,12 +44,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         if ($user_name !== $user['user_name']) $hasChanges = true;
         if ($bio !== $user['bio']) $hasChanges = true;
         if ($profile_pic_path !== $user['profile_pic']) $hasChanges = true;
+        $originalUser = $user;
 
         if ($hasChanges) {
             updateUserProfileWithSkills($conn, $userId, $user_name, $bio, [], $profile_pic_path);
             $success = true;
             $user = getUserById($conn, $userId);
-        } 
+
+            // Activity log
+            $activityDetails = "Updated profile";
+            $changedFields = [];
+            if ($user_name !== $originalUser['user_name']) $changedFields[] = "Name";
+            if ($bio !== $originalUser['bio']) $changedFields[] = "Bio";
+            if ($profile_pic_path !== $originalUser['profile_pic']) $changedFields[] = "Profile Picture";
+
+            if (!empty($changedFields)) {
+                $activityDetails .= " - Changed: " . implode(", ", $changedFields);
+            }
+
+            logActivity($conn, $userId, $activityDetails);
+        }
     }
 }
 
@@ -99,15 +113,19 @@ $profilePic = !empty($user['profile_pic']) ? '/' . $user['profile_pic'] : null;
 
 <main class="profile-page">
 
-    <!-- Back to Dashboard
-    <div class="profile-back">
-        <a href="<?= $isAdmin ? '../dashboard/admin_dashboard.php' : ($isLearner ? '../dashboard/learner_dashboard.php' : '../dashboard/teacher_dashboard.php') ?>" class="back-btn">
-            &#8592; Back to Dashboard
-        </a>
-    </div> -->
-
     <!-- Profile Header -->
     <div class="profile-header">
+
+        <a href="<?= $isAdmin
+                        ? '../dashboard/admin_dashboard.php'
+                        : ($isLearner
+                            ? '../dashboard/learner_dashboard.php'
+                            : '../dashboard/teacher_dashboard.php') ?>"
+            class="back-btn-header">
+            &#8592;
+        </a>
+
+
         <div class="avatar-large">
             <?php if ($profilePic): ?>
                 <img src="<?= "../" . htmlspecialchars($user['profile_pic']) ?>" alt="avatar" class="profile-pic">

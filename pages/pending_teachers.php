@@ -17,10 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($teacherId && in_array($action, ['approve', 'reject'])) {
-
         $adminId = $_SESSION['user_id'];
 
-        // Fetch teacher name (for readable activity)
+        // Fetch teacher name
         $stmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
         $stmt->bind_param("i", $teacherId);
         $stmt->execute();
@@ -29,31 +28,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
 
         if ($action === 'approve') {
-            $stmt = $conn->prepare("UPDATE teachers SET status='active' WHERE users_user_id=?");
+            // Update status to active; avoid duplicates
+            $stmt = $conn->prepare("
+                INSERT INTO teachers (users_user_id, status)
+                VALUES (?, 'active')
+                ON DUPLICATE KEY UPDATE status='active'
+            ");
             $stmt->bind_param("i", $teacherId);
             $stmt->execute();
             $stmt->close();
 
-            logActivity(
-                $conn,
-                $adminId,
-                "Approved teacher account: {$teacherName}"
-            );
+            // Log activities
+            logActivity($conn, $adminId, "Approved teacher account: {$teacherName}");
+            logActivity($conn, $teacherId, "Your account has been approved by the admin");
 
             $_SESSION['success'] = "Teacher approved successfully!";
         }
 
         if ($action === 'reject') {
-            $stmt = $conn->prepare("UPDATE teachers SET status='none' WHERE users_user_id=?");
+            // Remove from pending if rejected
+            $stmt = $conn->prepare("
+                DELETE FROM teachers
+                WHERE users_user_id=? AND status IN ('none','inactive')
+            ");
             $stmt->bind_param("i", $teacherId);
             $stmt->execute();
             $stmt->close();
 
-            logActivity(
-                $conn,
-                $adminId,
-                "Rejected teacher account: {$teacherName}"
-            );
+            logActivity($conn, $adminId, "Rejected teacher account: {$teacherName}");
 
             $_SESSION['success'] = "Teacher rejected!";
         }
@@ -63,12 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch all pending teachers
+// Fetch pending teachers (no duplicates)
 $query = "
     SELECT t.users_user_id, t.status, u.user_name, u.email, u.profile_pic
     FROM teachers t
     JOIN users u ON t.users_user_id = u.user_id
     WHERE t.status IN ('none','inactive')
+    GROUP BY t.users_user_id
     ORDER BY u.user_name ASC
 ";
 $res = $conn->query($query);

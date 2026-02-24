@@ -1,20 +1,18 @@
 <?php
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Load database connection (creates $conn)
 include('../includes/config.php');
 
-// Load common helper functions used across the system
 require_once __DIR__ . '/../includes/functions.php';
 
-// Ensure the user is logged in; redirects if session is missing
+// Ensure the user is logged in else redirects if session is missing
 include('../middlewares/session_check.php');
 
 // Ensure only authorized roles (admin) can access this dashboard
 include('../middlewares/role_check.php');
-
 allowRoles(['admin']);
 
 $adminStats = getAdminStats($conn);
@@ -118,7 +116,7 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
 
                     <!-- Recent Activity Log -->
                     <section class="activities-section">
-                        <h3>Recent Activities</h3>
+                        <h3 style="margin-bottom: 8px;">Recent Activities</h3>
 
                         <div class="activity-feed">
                             <table>
@@ -143,21 +141,7 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
                             </table>
                         </div>
                     </section>
-<!-- 
-                    <section class="statistics-section" id="admin-bar-chart">
-                        <h3>Platform Statistics</h3>
-                        <div class="bar-chart-container">
-                            <?php foreach ($adminStats as $title => $count): ?>
-                                <div class="bar-wrapper">
-                                    <div class="bar" data-value="<?= $count ?>"></div>
-                                    <span class="bar-label"><?= str_replace('_', ' ', ucwords($title)) ?></span>
-                                    <span class="bar-value"><?= $count ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </section> -->
-
-
+                    
                 </div>
 
                 <!-- ADMIN QUICK ACTION SHORTCUTS -->
@@ -190,30 +174,6 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
             <?php include('../includes/layouts/footer.php'); ?>
         </div>
     </div>
-
-    <!-- Layout-related JS -->
-    <script src="../assets/js/layout.js" defer></script>
-
-    <!-- <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const bars = document.querySelectorAll('#admin-bar-chart .bar');
-            if (!bars.length) return;
-
-            const maxValue = Math.max(...Array.from(bars).map(bar => parseInt(bar.dataset.value)));
-
-            bars.forEach(bar => {
-                const value = parseInt(bar.dataset.value);
-                const heightPercent = maxValue ? (value / maxValue) * 100 : 0;
-                bar.style.height = heightPercent > 0 ? heightPercent + '%' : '5px';
-            });
-
-            const activitiesSection = document.querySelector('.activities-section');
-            const statsSection = document.querySelector('#admin-bar-chart');
-            if (activitiesSection && statsSection) {
-                statsSection.style.minHeight = activitiesSection.offsetHeight + 'px';
-            }
-        });
-    </script> -->
 
 </body>
 

@@ -1,7 +1,4 @@
-<!-- // ==========================================
-// pages/learner_skills.php
-// Learner-specific enrolled skills listing with progress & certificates
-// ========================================== -->
+<!-- ============MY ENROLLMENTS=========================== -->
 <?php
 
 ini_set('display_errors', 1);

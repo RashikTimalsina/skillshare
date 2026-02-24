@@ -34,14 +34,6 @@ $teacher_user_id = $_SESSION['user_id'];
 $teacher = User::getById($conn, $teacher_user_id);
 $user_name = $teacher->full_name ?? 'Unknown User';
 
-// ==============================
-// Activity logging (once per session)
-// ==============================
-if (!isset($_SESSION['teacher_dashboard_visited'])) {
-    logTeacherActivity($conn, $teacher_user_id, "Visited Teacher Dashboard");
-    $_SESSION['teacher_dashboard_visited'] = true;
-}
-
 
 // Fetch Teacher Skills (only active ones)
 $teacher_skills = Teacher::getAllByUserId($conn, $teacher_user_id);
@@ -165,13 +157,6 @@ $cards = [
                         <?php endif; ?>
                     </div>
 
-                    <!-- <div class="teacher-statistics">
-                        <h3>Statistics</h3>
-                        <div class="stat-card">Skills Offered: <?= $skills_offered ?></div>
-                        <div class="stat-card">Active Enrollments: <?= $active_enrollments ?></div>
-                        <div class="stat-card">Completed Enrollments: <?= $completed_enrollments ?></div>
-                        <div class="stat-card">Pending Feedbacks: <?= $pending_feedbacks ?></div>
-                    </div> -->
 
                 </section>
 
