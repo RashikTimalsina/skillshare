@@ -65,9 +65,7 @@ class TeacherReward
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    /* ===============================
-       ADMIN: Get all rewards
-    =============================== */
+    //Admin get All rewards
     public static function getAll(mysqli $conn): array
     {
         $sql = "

@@ -112,7 +112,7 @@ class Enrollment
     }
 
 
-
+    //get teachers by skills
     public static function getByTeacherSkills($conn, $teacherUserId)
     {
         $stmt = $conn->prepare("
@@ -133,6 +133,7 @@ class Enrollment
         return $enrollments;
     }
     
+    //get all users by id
     public static function getAllByUserId($conn, $userId)
     {
         $sql = "
@@ -152,6 +153,7 @@ class Enrollment
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
+    //get by enrollment id
     public static function getById($conn, $enrollmentId)
     {
         $stmt = $conn->prepare("

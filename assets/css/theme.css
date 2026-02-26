@@ -1,17 +1,15 @@
-/* ==============================
-   COMMON THEME.CSS FOR SKILLSHARING
-   ============================== */
+/* ===================COMMON THEME CSS==================== */
 
-/* ---------- COLORS & VARIABLES ---------- */
+/* Colors */
 :root {
-  --bg-main: #f5f6fa; /* overall page background */
-  --bg-card: #ffffff; /* cards, tables, widgets */
-  --bg-hover: #eef1f8; /* subtle hover */
-  --border-light: #e2e4eb; /* border lines */
-  --text-primary: #1f2937; /* main text */
-  --text-secondary: #6b7280; /* secondary/muted text */
-  --accent: #6c00bb; /* primary accent */
-  --accent-soft: #f0eaff; /* accent hover background */
+  --bg-main: #f5f6fa; 
+  --bg-card: #ffffff; 
+  --bg-hover: #eef1f8; 
+  --border-light: #e2e4eb; 
+  --text-primary: #1f2937; 
+  --text-secondary: #6b7280; 
+  --accent: #6c00bb; 
+  --accent-soft: #f0eaff; 
   --shadow-light: rgba(0, 0, 0, 0.05);
   --shadow-medium: rgba(0, 0, 0, 0.12);
   --font-base:
@@ -52,7 +50,7 @@ button {
   transition: all 0.2s ease;
 }
 
-/* ---------- CARDS & CONTAINERS ---------- */
+/* ---------- Cards and containers ---------- */
 .card,
 .action-card,
 .learner-card,
@@ -78,7 +76,7 @@ button {
   box-shadow: 0 6px 20px var(--shadow-medium);
 }
 
-/* ---------- HEADINGS ---------- */
+/* ----------headings---------- */
 h1,
 h2,
 h3,
@@ -99,7 +97,7 @@ h3 {
   font-size: 1.5rem;
 }
 
-/* ---------- BUTTONS ---------- */
+/* ---------- buttons ---------- */
 .btn-primary {
   background: var(--accent);
   color: #fff;
@@ -123,7 +121,7 @@ h3 {
   background: #e5d8ff;
 }
 
-/* ---------- TABLES ---------- */
+/* ---------- tables ---------- */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -146,7 +144,7 @@ tr:hover {
   background: var(--bg-hover);
 }
 
-/* ---------- INPUTS & SELECTS ---------- */
+/* ---------- inputs and selects ---------- */
 input,
 select,
 textarea {
@@ -166,7 +164,7 @@ textarea:focus {
   outline: none;
 }
 
-/* ---------- LINKS ---------- */
+/* ---------- links ---------- */
 a {
   color: var(--accent);
   transition: color 0.2s ease;
@@ -175,7 +173,7 @@ a:hover {
   color: #5600a1;
 }
 
-/* ---------- MODALS / OVERLAYS ---------- */
+/* ---------- modals ---------- */
 .modal {
   background: rgba(0, 0, 0, 0.4);
   display: flex;
@@ -186,7 +184,7 @@ a:hover {
   z-index: 1500;
 }
 
-/* ---------- UTILITIES ---------- */
+/* ---------- utilities ---------- */
 .flex {
   display: flex;
 }
@@ -206,7 +204,7 @@ a:hover {
   gap: 1rem;
 }
 
-/* ---------- RESPONSIVE BASE ---------- */
+/* ---------- responsive---------- */
 @media (max-width: 1440px) {
   html {
     font-size: 15px;

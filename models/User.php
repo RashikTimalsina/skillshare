@@ -29,11 +29,8 @@ class User
         $this->updated_at = $data['updated_at'] ?? null;
     }
 
-    /* =======================
-       READ OPERATIONS
-    ======================= */
 
-    // Admin: view all users
+    // Admin: view all users(read them)
     public static function getAll($conn)
     {
         $stmt = $conn->prepare(
@@ -74,9 +71,7 @@ class User
         return $row ? new User($row) : null;
     }
 
-    /* =======================
-       ADMIN CONTROL OPERATIONS
-    ======================= */
+   
 
     // Activate / Deactivate user
     public static function updateStatus($conn, $id, $status)
@@ -104,11 +99,9 @@ class User
         return $success;
     }
 
-    /* =======================
-       AUTH / SIGNUP OPERATIONS
-       (NOT FOR ADMIN UI)
-    ======================= */
+    
 
+    //create admin 
     public static function create($conn, $data)
     {
         $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -135,9 +128,7 @@ class User
     }
 
 
-    /* =======================
-   DELETE USER (ADMIN ONLY)
-======================= */
+   //Delete user
     public static function delete($conn, $id)
     {
         // Prevent deleting admin users (optional, safety)
@@ -148,7 +139,7 @@ class User
         $stmt->close();
 
         if ($role === 'admin') {
-            return false; // Cannot delete admin
+            return false; 
         }
 
         // Delete user
@@ -159,6 +150,9 @@ class User
 
         return $success;
     }
+
+
+    //fetch all by role
     public static function getAllByRole($conn, string $role): array
     {
         $stmt = $conn->prepare("SELECT * FROM users WHERE role = ? ORDER BY user_id ASC");
@@ -172,7 +166,7 @@ class User
         return $users;
     }
 
-    // In User.php
+    
 
     // Get learner's enrolled skills
     public static function getLearnerSkills($conn, $userId): array
@@ -190,6 +184,7 @@ class User
         return array_column($res, 'skill_name');
     }
 
+    
     // Get teacher's active skills
     public static function getTeacherSkills($conn, $userId): array
     {

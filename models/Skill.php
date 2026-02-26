@@ -28,7 +28,7 @@ class Skill
         $this->owned_by_user = $data['owned_by_user'] ?? false;
     }
 
-    // --- CREATE SKILL ---
+    //create skill
     public static function create($conn, $data, int $teacherId, array $file)
     {
         if (!isset($file['thumbnail']) || $file['thumbnail']['error'] !== UPLOAD_ERR_OK) {
@@ -38,7 +38,8 @@ class Skill
         $conn->begin_transaction();
 
         try {
-            // 1️⃣ Check for duplicate skill name for this teacher
+
+            // Check for duplicate skill name for this teacher
             $stmt = $conn->prepare("SELECT skill_id FROM skills WHERE skill_name = ? AND created_by = ?");
             $stmt->bind_param("si", $data['skill_name'], $teacherId);
             $stmt->execute();
@@ -50,13 +51,13 @@ class Skill
             }
             $stmt->close();
 
-            // 2️⃣ Save thumbnail
+            //  Save thumbnail
             list($thumbnailPath, $err) = saveSkillThumbnail($file['thumbnail']);
             if ($err) throw new Exception($err);
 
             $categoryId = !empty($data['categories_category_id']) ? (int)$data['categories_category_id'] : null;
 
-            // 3️⃣ Insert skill
+            //  Insert skill
             $stmt = $conn->prepare("
             INSERT INTO skills (skill_name, description, categories_category_id, created_by, thumbnail, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, NOW(), NOW())
@@ -77,8 +78,8 @@ class Skill
             $skillId = $stmt->insert_id;
             $stmt->close();
 
-            // 4️⃣ Link teacher → skill (if not already exists)
-            // 4️⃣ Link teacher → skill (ensure active status)
+           
+            //  Link teacher → skill (ensure active status)
             $stmt = $conn->prepare("
              INSERT INTO teachers (users_user_id, skills_skill_id, status)
              VALUES (?, ?, 'active')
@@ -88,7 +89,7 @@ class Skill
             $stmt->execute();
             $stmt->close();
 
-            // 5️⃣ Record in user_skills
+            //  Record in user_skills
             $stmt = $conn->prepare("INSERT INTO user_skills (user_id, skill_id, role) VALUES (?, ?, 'teacher')");
             $stmt->bind_param("ii", $teacherId, $skillId);
             if (!$stmt->execute()) {

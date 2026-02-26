@@ -1,10 +1,10 @@
 <?php
 // ======================= SESSION & ROLE HELPERS =======================
 
-// Admin logging (unchanged)
+// Admin logging 
 function logActivity(mysqli $conn, int $userId, string $action): void
 {
-    // Guard: ensure the user exists
+    // ensure the user exists
     $check = $conn->prepare("SELECT 1 FROM users WHERE user_id = ?");
     $check->bind_param("i", $userId);
     $check->execute();
@@ -12,11 +12,11 @@ function logActivity(mysqli $conn, int $userId, string $action): void
 
     if ($check->num_rows === 0) {
         $check->close();
-        return; // silently ignore invalid user_id
+        return; 
     }
     $check->close();
 
-    // Insert activity
+    // insert activity
     $stmt = $conn->prepare("
         INSERT INTO activities (user_id, action, created_at)
         VALUES (?, ?, NOW())
@@ -25,78 +25,6 @@ function logActivity(mysqli $conn, int $userId, string $action): void
     $stmt->execute();
     $stmt->close();
 }
-
-
-// // Learner logging
-// function logLearnerActivity(mysqli $conn, int $learnerId, string $action, ?int $skillId = null, ?string $context = null): void
-// {
-//     // Guard: ensure learner exists
-//     $check = $conn->prepare("SELECT 1 FROM users WHERE user_id=? AND role='learner'");
-//     $check->bind_param("i", $learnerId);
-//     $check->execute();
-//     $check->store_result();
-//     if ($check->num_rows === 0) {
-//         $check->close();
-//         return;
-//     }
-//     $check->close();
-
-    // Optional skill context
-//     $skillName = null;
-//     if ($skillId) {
-//         $stmt = $conn->prepare("SELECT skill_name FROM skills WHERE skill_id=?");
-//         $stmt->bind_param("i", $skillId);
-//         $stmt->execute();
-//         $stmt->bind_result($skillName);
-//         $stmt->fetch();
-//         $stmt->close();
-//     }
-
-//     $fullAction = $action;
-//     if ($skillName) $fullAction .= " (Skill: $skillName)";
-//     if ($context) $fullAction .= " - $context";
-
-//     $stmt = $conn->prepare("INSERT INTO activities (user_id, action, created_at) VALUES (?, ?, NOW())");
-//     $stmt->bind_param("is", $learnerId, $fullAction);
-//     $stmt->execute();
-//     $stmt->close();
-// }
-
-// Teacher logging
-// function logTeacherActivity(mysqli $conn, int $teacherId, string $action, ?int $skillId = null, ?string $context = null): void
-// {
-//     // Guard: ensure teacher exists
-//     $check = $conn->prepare("SELECT 1 FROM users WHERE user_id=? AND role='teacher'");
-//     $check->bind_param("i", $teacherId);
-//     $check->execute();
-//     $check->store_result();
-//     if ($check->num_rows === 0) {
-//         $check->close();
-//         return;
-//     }
-//     $check->close();
-
-//     // Optional skill context
-//     $skillName = null;
-//     if ($skillId) {
-//         $stmt = $conn->prepare("SELECT skill_name FROM skills WHERE skill_id=?");
-//         $stmt->bind_param("i", $skillId);
-//         $stmt->execute();
-//         $stmt->bind_result($skillName);
-//         $stmt->fetch();
-//         $stmt->close();
-//     }
-
-//     $fullAction = $action;
-//     if ($skillName) $fullAction .= " (Skill: $skillName)";
-//     if ($context) $fullAction .= " - $context";
-
-//     $stmt = $conn->prepare("INSERT INTO activities (user_id, action, created_at) VALUES (?, ?, NOW())");
-//     $stmt->bind_param("is", $teacherId, $fullAction);
-//     $stmt->execute();
-//     $stmt->close();
-// }
-
 
 
 // Fetch recent activities
@@ -136,7 +64,7 @@ function getRecentActivities(mysqli $conn, string $userRole, int $userId, int $l
     return $result;
 }
 
-
+//get admin stats
 function getAdminStats($conn)
 {
     return [

@@ -1,13 +1,5 @@
 <?php
 
-/**
- * Flash Messages Handler
- * 
- * Usage:
- * - To set a message for a page: setFlash('skills', 'success', 'Message text here');
- * - To display messages for a page: showFlash('skills');
- */
-
 /* ---------------------------
    Set Flash Message Function
 --------------------------- */
