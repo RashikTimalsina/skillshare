@@ -1,3 +1,4 @@
+<!-- =================ENROLLMENTS MANAGEMENT PAGE======================= -->
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -8,7 +9,7 @@ include('../includes/functions.php');
 include('../includes/config.php');
 include('../middlewares/session_check.php');
 include('../middlewares/role_check.php');
-require_once('../includes/flash_messages.php'); 
+require_once('../includes/flash_messages.php');
 
 allowRoles(['admin', 'learner', 'teacher']);
 
@@ -82,14 +83,13 @@ if ($role === 'teacher' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST
     if ($enrollmentId && $status) {
         // --- FIXED: fetch user_name and skill_name for activity logging ---
         $stmt = $conn->prepare("
-            SELECT e.enrollment_id, s.skill_name, u.user_name
-            FROM enrollments e
-            JOIN skills s ON e.skills_skill_id = s.skill_id
-            JOIN users u ON e.users_user_id = u.user_id
-            JOIN teachers t ON s.skill_id = t.skills_skill_id
-            WHERE e.enrollment_id = ? AND t.users_user_id = ?
-            LIMIT 1
-        ");
+    SELECT e.enrollment_id, s.skill_name, u.user_name
+    FROM enrollments e
+    JOIN skills s ON e.skills_skill_id = s.skill_id
+    JOIN users u ON e.users_user_id = u.user_id
+    WHERE e.enrollment_id = ? AND s.created_by = ?
+    LIMIT 1
+");
         $stmt->bind_param("ii", $enrollmentId, $userId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -145,7 +145,6 @@ if ($role === 'teacher' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST
                     );
                 }
             }
-
         } else {
             setFlash('enrollments', 'error', 'Unauthorized or invalid enrollment update attempt.');
         }
@@ -275,16 +274,6 @@ if ($role === 'learner') {
                     </tbody>
                 </table>
             </div>
-
-            <?php if ($role === 'learner'): ?>
-                <form method="POST" class="learner-enroll-form">
-                    <select name="skills_skill_id" required>
-                        <option value="">Select Skill to Enroll</option>
-                        <?= $skillsOptions ?>
-                    </select>
-                    <button type="submit" name="enroll_skill">Enroll</button>
-                </form>
-            <?php endif; ?>
 
         </div>
     </div>

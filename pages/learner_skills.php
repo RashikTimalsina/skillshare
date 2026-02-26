@@ -1,4 +1,4 @@
-<!-- ============MY ENROLLMENTS=========================== -->
+<!-- =================MY SKILLS======================= -->
 <?php
 
 ini_set('display_errors', 1);
@@ -132,7 +132,7 @@ include '../includes/layouts/header.php';
 
                         <?php else: ?>
                             <tr>
-                                <td colspan="7">You have not enrolled in any skills yet.</td>
+                                <td colspan="7" style="text-align:center;">You have not enrolled in any skills yet.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

@@ -1,4 +1,4 @@
-<!-- ------FEEDBACK PAGE------ -->
+<!-- ======== FEEDBACK PAGE ======== -->
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -63,13 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Fetch teacher offering this skill
             $stmt = $conn->prepare("
-        SELECT u.user_name AS teacher_name
-        FROM teachers t
-        JOIN users u ON t.users_user_id = u.user_id
-        WHERE t.skills_skill_id = ?
-        AND t.status = 'active'
-        LIMIT 1
-    ");
+                 SELECT u.user_name AS teacher_name
+                 FROM user_skills us
+                 JOIN users u ON us.user_id = u.user_id
+                 WHERE us.skill_id = ?
+                AND us.role = 'teacher'
+                LIMIT 1
+            ");
             $stmt->bind_param("i", $skill_id);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -125,13 +125,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $teacherName = 'Unknown Teacher';
 
             $stmt = $conn->prepare("
-        SELECT u.user_name AS teacher_name
-        FROM teachers t
-        JOIN users u ON t.users_user_id = u.user_id
-        WHERE t.skills_skill_id = ?
-        AND t.status = 'active'
-        LIMIT 1
-    ");
+                 SELECT u.user_name AS teacher_name
+                 FROM user_skills us
+                 JOIN users u ON us.user_id = u.user_id
+                 WHERE us.skill_id = ?
+                AND us.role = 'teacher'
+                LIMIT 1
+            ");
             $stmt->bind_param("i", $existing->skills_skill_id);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -175,13 +175,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $teacherName = 'Unknown Teacher';
 
             $stmt = $conn->prepare("
-        SELECT u.user_name AS teacher_name
-        FROM teachers t
-        JOIN users u ON t.users_user_id = u.user_id
-        WHERE t.skills_skill_id = ?
-        AND t.status = 'active'
-        LIMIT 1
-    ");
+                 SELECT u.user_name AS teacher_name
+                 FROM user_skills us
+                 JOIN users u ON us.user_id = u.user_id
+                 WHERE us.skill_id = ?
+                AND us.role = 'teacher'
+                LIMIT 1
+            ");
             $stmt->bind_param("i", $existing->skills_skill_id);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -259,7 +259,7 @@ include('../includes/layouts/header.php');
             <!-- ---------- FEEDBACK FORM FOR LEARNERS ---------- -->
             <?php if ($role === 'learner' && !empty($feedbackEligibleSkills)): ?>
                 <div class="feedback-form">
-                    <h3>Submit Feedback for Completed Skills</h3>
+                   
                     <form method="POST">
                         <label for="skills_skill_id">Select Skill:</label>
                         <select name="skills_skill_id" required>

@@ -1,4 +1,4 @@
-<!-- --------USER MANAGEMENT PAGE--------- -->
+<!-- ======= USER MANAGEMENT PAGE ========-- -->
 
 <?php
 
@@ -6,11 +6,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-session_start();
+session_start(); 
 require_once '../includes/config.php';
 require_once '../includes/functions.php';
 require_once '../middlewares/session_check.php';
 require_once '../middlewares/role_check.php';
+require_once '../includes/flash_messages.php';
 require_once '../models/User.php';
 
 allowRoles(['admin', 'teacher', 'learner']);
@@ -23,23 +24,32 @@ if ($currentUserRole === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Toggle Teacher Status
     if (isset($_POST['toggle_status'])) {
+
         $userId = (int)$_POST['user_id'];
         $newStatus = $_POST['new_status'] === 'active' ? 'active' : 'inactive';
 
         $targetUser = User::getById($conn, $userId);
+
         if ($targetUser && $targetUser->role === 'teacher') {
 
-            // 1️⃣ Update users table
-            User::updateStatus($conn, $userId, $newStatus);
+            $updated = User::updateStatus($conn, $userId, $newStatus);
 
-            // 2️⃣ Update teachers table as well
             $stmt = $conn->prepare("UPDATE teachers SET status = ? WHERE users_user_id = ?");
             $stmt->bind_param("si", $newStatus, $userId);
             $stmt->execute();
             $stmt->close();
 
             logActivity($conn, $currentUserId, "Updated teacher with ID {$userId} status to '{$newStatus}'");
+
+            if ($updated) {
+                setFlash('users', 'success', "Teacher status updated to '{$newStatus}'.");
+            } else {
+                setFlash('users', 'error', 'Failed to update teacher status.');
+            }
+        } else {
+            setFlash('users', 'error', 'Invalid teacher selected.');
         }
+
         header('Location: users.php');
         exit;
     }
@@ -52,8 +62,16 @@ if ($currentUserRole === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $targetUser = User::getById($conn, $userId);
         if ($targetUser && $targetUser->role === 'none') {
-            User::updateRole($conn, $userId, $role);
+
+            $updated = User::updateRole($conn, $userId, $role);
             logActivity($conn, $currentUserId, "Assigned role '{$role}' to user ID {$userId}");
+            if ($updated) {
+                setFlash('users', 'success', "Role '{$role}' assigned successfully.");
+            } else {
+                setFlash('users', 'error', 'Failed to assign role.');
+            }
+        } else {
+            setFlash('users', 'warning', 'User already has a role assigned.');
         }
         header('Location: users.php');
         exit;
@@ -93,7 +111,7 @@ include '../includes/layouts/header.php';
                 <h2>Users Management</h2>
             </div>
 
-            <?php include '../includes/flash_messages.php'; ?>
+            <?php showFlash('users'); ?>
 
             <div class="filter-container">
                 <?php if ($currentUserRole === 'admin'): ?>

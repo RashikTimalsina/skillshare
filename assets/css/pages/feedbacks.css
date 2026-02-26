@@ -1,6 +1,6 @@
 @import url("users.css");
 
-/* Star Rating Styles */
+/* Additional feedback styles */
 .star-rating {
   display: flex;
   flex-direction: row-reverse;
@@ -27,4 +27,78 @@
   color: #edc010;
   font-size: 18px;
   letter-spacing: 2px;
+}
+/* ================= Feedback Inline Form ================= */
+.feedback-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.feedback-form label {
+  font-weight: 500;
+  color: #111;
+  margin: 0 5px 0 0;
+}
+
+.feedback-form select,
+.feedback-form textarea {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 2px solid #6c00bb;
+  font-size: 14px;
+  color: #111;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  height: 32px;
+  margin-top:20px;
+  margin-right:30px;
+}
+
+.feedback-form textarea {
+  min-height: 32px;
+  resize: vertical;
+  width: 200px; /* keep inline width */
+}
+
+.feedback-form select:hover,
+.feedback-form select:focus,
+.feedback-form textarea:hover,
+.feedback-form textarea:focus {
+  border-color: #9351e9;
+  box-shadow: 0 0 4px rgba(147, 81, 233, 0.3);
+  outline: none;
+}
+
+.feedback-form button[type="submit"] {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  background-color: #6c00bb;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 32px;
+}
+
+.feedback-form button[type="submit"]:hover {
+  background-color: #9351e9;
+}
+
+/* Responsive: stack on small screens */
+@media screen and (max-width: 768px) {
+  .feedback-form {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .feedback-form select,
+  .feedback-form textarea,
+  .feedback-form button[type="submit"] {
+    width: 100%;
+    height: 36px;
+  }
 }

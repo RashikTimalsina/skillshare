@@ -19,7 +19,7 @@ $role = $_SESSION['user_role']; // admin / teacher / learner
 // Handle search and sort
 $search = $_GET['search'] ?? '';
 $sort = $_GET['sort'] ?? 'ASC';
-$sort = strtoupper($sort) === 'DESC' ? 'DESC' : 'ASC'; // default ASC
+$sort = strtoupper($sort) === 'DESC' ? 'DESC' : 'ASC'; 
 
 $sql = "SELECT user_id, user_name, email, role FROM users 
         WHERE user_name LIKE ? 

@@ -1,3 +1,4 @@
+<!-- =================EXPLORE SKILLS PAGE======================= -->
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -42,14 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['skill_id']) && $userI
 
         if ($skill) {
             // Fetch teacher name for this skill
+            // Fetch teacher name for this skill correctly
             $stmt = $conn->prepare("
-        SELECT u.user_name AS teacher_name
-        FROM teachers t
-        JOIN users u ON t.users_user_id = u.user_id
-        WHERE t.skills_skill_id = ?
-        AND t.status = 'active'
-        LIMIT 1
-    ");
+                  SELECT u.user_name AS teacher_name
+                 FROM user_skills us
+                 JOIN teachers t ON t.users_user_id = us.user_id AND t.status = 'active'
+                  JOIN users u ON u.user_id = us.user_id
+                WHERE us.skill_id = ? AND us.role = 'teacher'
+                  LIMIT 1
+");
             $stmt->bind_param("i", $skillId);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -86,7 +88,8 @@ $sql = "
         s.skill_id, s.skill_name, s.description, s.thumbnail,
         u.user_name AS teacher_name
     FROM skills s
-    JOIN teachers t ON t.skills_skill_id = s.skill_id AND t.status = 'active'
+    JOIN user_skills us ON us.skill_id = s.skill_id AND us.role = 'teacher'
+    JOIN teachers t ON t.users_user_id = us.user_id AND t.status = 'active'
     JOIN users u ON u.user_id = t.users_user_id
     " . ($searchQuery ? "WHERE s.skill_name LIKE ?" : "") . "
     ORDER BY s.created_at DESC
@@ -132,7 +135,7 @@ if (!$userId) {
 <link rel="stylesheet" href="../assets/css/pages/browse_skills.css">
 
 <div class="browse-skills-container">
-    <!-- Header row: Back | Title | Search -->
+    
     <div class="browse-header">
         <div class="back-icon">
             <a href="<?= $backUrl ?>" title="Back to Dashboard">&#8592; Back</a>

@@ -1,3 +1,4 @@
+<!-- =================PENDING TEACHER REQUEST PAGE (ADMIN)======================= -->
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -9,7 +10,7 @@ require_once '../includes/functions.php';
 require_once '../middlewares/session_check.php';
 require_once '../middlewares/role_check.php';
 
-allowRoles(['admin']); // Only admin can access
+allowRoles(['admin']); 
 
 // Handle Approve/Reject Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

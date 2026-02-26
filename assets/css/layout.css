@@ -1,13 +1,12 @@
-/* === MODERN COLOR SYSTEM === */
 :root {
-  --bg-main: #f3f4f6;        /* page background */
-  --bg-card: #ffffff;        /* cards */
-  --bg-hover: #f9fafb;       /* subtle hover */
-  --border-light: #e5e7eb;   /* borders */
-  --text-primary: #111827;   /* main text */
-  --text-secondary: #6b7280; /* muted text */
-  --accent: #6c00bb;       /* indigo accent */
-  --accent-soft: #eef2ff;    /* hover background */
+  --bg-main: #f3f4f6;        
+  --bg-card: #ffffff;       
+  --bg-hover: #f9fafb;      
+  --border-light: #e5e7eb;  
+  --text-primary: #111827;  
+  --text-secondary: #6b7280; 
+  --accent: #6c00bb;      
+  --accent-soft: #eef2ff;   
 }
 
 

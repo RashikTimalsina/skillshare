@@ -1,10 +1,5 @@
+<!-- =================LEARNER DASHBOARD PAGE======================= -->
 <?php
-// ==========================================
-// dashboard/learner_dashboard.php
-// Learner-facing dashboard with enrollments,
-// progress, certificates, feedback, and activity.
-// ==========================================
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -17,7 +12,6 @@ include('../middlewares/role_check.php');
 
 allowRoles(['learner']);
 
-// Load Models
 require_once __DIR__ . '/../models/Enrollment.php';
 require_once __DIR__ . '/../models/Certificate.php';
 require_once __DIR__ . '/../models/Feedback.php';
@@ -26,11 +20,7 @@ require_once __DIR__ . '/../models/Skill.php';
 $learner_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'] ?? 'Learner';
 
-
-
-// ==============================
 // Dashboard metrics
-// ==============================
 $allEnrollments = Enrollment::getAllByUserId($conn, $learner_id);
 $active_enrollments = array_filter($allEnrollments, fn($e) => $e['status'] === 'enrolled');
 $completed_enrollments = count(array_filter($allEnrollments, fn($e) => $e['status'] === 'completed'));
@@ -43,14 +33,10 @@ $allFeedbacks = Feedback::getByUser($conn, $learner_id);
 
 $feedback_given = count(array_filter($allFeedbacks, fn($f) => $f->feedback_given === 'yes'));
 
-// ==============================
 // Recent Activities (limit 5)
-// ==============================
 $recent_activities = getRecentActivities($conn, 'learner', $learner_id, 5);
 
-// ==============================
 // Dashboard Cards
-// ==============================
 $cards = [
     ['title' => 'Active Enrollments', 'count' => count($active_enrollments), 'icon' => 'fa-user-graduate', 'color' => '#1cc88a'],
     ['title' => 'Completed Skills', 'count' => $completed_enrollments, 'icon' => 'fa-check-circle', 'color' => '#36b9cc'],
@@ -58,6 +44,8 @@ $cards = [
     ['title' => 'Certificates Earned', 'count' => $certificates_earned, 'icon' => 'fa-certificate', 'color' => '#f6c23e'],
 ];
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -92,8 +80,9 @@ $cards = [
                     <?php endforeach; ?>
                 </section>
 
-                <!-- Split Section: Left = Activities, Right = Active Skills Progress -->
+                <!-- Recent Activities table -->
                 <section class="learner-middle-section">
+
                     <div class="learner-activities">
                         <h3>Recent Activities</h3>
                         <?php if (!empty($recent_activities)): ?>
@@ -118,29 +107,9 @@ $cards = [
                         <?php endif; ?>
                     </div>
 
-                    <!-- <div class="learner-progress">
-                        <h3>Active Skills Progress</h3>
-                        <?php if (!empty($active_enrollments)): ?>
-                            <?php foreach ($active_enrollments as $enroll): ?>
-                                <?php
-                                $skill = Skill::getById($conn, $enroll['skills_skill_id']);
-                                $progress = Enrollment::calculateProgress($conn, $enroll['enrollment_id']);
-                                ?>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar-title"><?= htmlspecialchars($skill->skill_name ?? 'Unknown Skill') ?></div>
-                                    <div class="progress-bar">
-                                        <div class="progress-bar-fill" style="width: <?= $progress ?>%;">
-                                            <?= $progress ?>%
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p>No active enrollments</p>
-                        <?php endif; ?>
-                    </div> -->
                 </section>
 
+                <!-- Quick Action  -->
                 <h3>Quick Actions</h3>
                 <section class="learner-quick-actions">
                     <?php

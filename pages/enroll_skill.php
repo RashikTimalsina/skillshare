@@ -55,18 +55,15 @@ $stmt->bind_param("ii", $user_id, $skill_id);
 
 if ($stmt->execute()) {
 
-    // ================================
-    // AUTOMATIC NOTIFICATION (ENROLLMENT)
-    // ================================
-
     // find teacher who owns this skill
     $teacher_sql = "
-        SELECT users_user_id 
-        FROM teachers 
-        WHERE skills_skill_id = ? 
-        AND status = 'active'
-        LIMIT 1
-    ";
+    SELECT u.user_name AS teacher_name
+    FROM user_skills us
+    JOIN teachers t ON t.users_user_id = us.user_id AND t.status = 'active'
+    JOIN users u ON u.user_id = t.users_user_id
+    WHERE us.skill_id = ? AND us.role = 'teacher'
+    LIMIT 1
+";
 
     $teacher_stmt = $conn->prepare($teacher_sql);
     $teacher_stmt->bind_param("i", $skill_id);

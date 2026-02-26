@@ -1,3 +1,5 @@
+<!-- =================SKILLS MANAGEMENT PAGE======================= -->
+
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -9,9 +11,10 @@ require_once '../includes/functions.php';
 require_once '../middlewares/session_check.php';
 require_once '../middlewares/role_check.php';
 require_once '../models/Skill.php';
-require_once '../includes/flash_messages.php'; // <-- Include flash handler
+require_once '../includes/flash_messages.php';
 
 allowRoles(['admin', 'teacher', 'learner']);
+
 $role = $_SESSION['user_role'];
 $userId = $_SESSION['user_id'];
 $userName = $_SESSION['user_name'] ?? '';
@@ -19,13 +22,7 @@ $userName = $_SESSION['user_name'] ?? '';
 // --- Fetch teacher status if role is teacher ---
 $teacherStatus = null;
 if ($role === 'teacher') {
-    $stmt = $conn->prepare("
-    SELECT status 
-    FROM teachers 
-    WHERE users_user_id=? 
-    ORDER BY FIELD(status, 'active','inactive','none') ASC
-    LIMIT 1
-");
+    $stmt = $conn->prepare("SELECT status FROM teachers WHERE users_user_id=? LIMIT 1");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $teacher = $stmt->get_result()->fetch_assoc();
@@ -36,13 +33,13 @@ if ($role === 'teacher') {
 // --- Handle "Request Approval" button ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_approval'])) {
     setFlash('skills', 'success', "Your approval request is already visible to admins. Please wait for approval.");
-    logActivity($conn, $userId, "Requested account approval to create skills");
     header("Location: skills.php");
     exit();
 }
 
 // --- Handle POST for teachers with active status ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStatus === 'active') {
+
     // ADD SKILL
     if (isset($_POST['add_skill'])) {
         $skillName = trim($_POST['skill_name'] ?? '');
@@ -62,11 +59,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStat
                 'categories_category_id' => $categoryId
             ];
             $newSkillId = Skill::create($conn, $data, $userId, $_FILES);
+
             if ($newSkillId) {
                 setFlash('skills', 'success', "Skill '{$skillName}' added successfully!");
-                logActivity($conn, $userId, "Added new skill '{$skillName}'");
+
+
+                $teacherStmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
+                $teacherStmt->bind_param("i", $userId);
+                $teacherStmt->execute();
+                $teacherResult = $teacherStmt->get_result();
+                $teacherData = $teacherResult->fetch_assoc();
+                $teacherName = $teacherData['user_name'] ?? 'Unknown Teacher';
+                $teacherStmt->close();
+
+                logActivity(
+                    $conn,
+                    $userId,
+                    "Created Skill '{$skillName}' "
+                );
+                // --------------------
             } else {
-                setFlash('skills', 'success', "Skill '{$skillName}' already exists!");
+                setFlash('skills', 'warning', "Skill '{$skillName}' already exists!");
             }
         } catch (Throwable $e) {
             setFlash('skills', 'error', "Error adding skill: " . $e->getMessage());
@@ -93,11 +106,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStat
             ];
             try {
                 $updated = Skill::update($conn, $skillId, $data, $_FILES);
+
                 if ($updated) {
                     setFlash('skills', 'success', "Skill updated successfully!");
-                    logActivity($conn, $userId, "Updated skill '{$skillName}'");
+
+                    $teacherStmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
+                    $teacherStmt->bind_param("i", $userId);
+                    $teacherStmt->execute();
+                    $teacherResult = $teacherStmt->get_result();
+                    $teacherData = $teacherResult->fetch_assoc();
+                    $teacherName = $teacherData['user_name'] ?? 'Unknown Teacher';
+                    $teacherStmt->close();
+
+                    logActivity(
+                        $conn,
+                        $userId,
+                        "Edited Skill '{$skillName}' "
+                    );
                 } else {
-                    setFlash('skills', 'success', "Cannot update, duplicate name!");
+                    setFlash('skills', 'warning', "Cannot update, duplicate name!");
                 }
             } catch (Throwable $e) {
                 setFlash('skills', 'error', "Error updating skill: " . $e->getMessage());
@@ -115,21 +142,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $role === 'teacher' && $teacherStat
         if (!Skill::isOwnedByUser($conn, $skillId, $userId)) {
             setFlash('skills', 'error', "Unauthorized action!");
         } else {
-
-            // Fetch skill info before deletion
+            // Fetch skill name before deletion for logging
             $skill = Skill::getById($conn, $skillId);
-
             $deleted = Skill::delete($conn, $skillId);
+
             if ($deleted) {
                 setFlash('skills', 'success', "Skill deleted successfully!");
-                if ($skill) {
-                    logActivity($conn, $userId, "Deleted skill '{$skill->skill_name}'");
-                }
+
+                // --- Activity Log ---
+                $teacherStmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
+                $teacherStmt->bind_param("i", $userId);
+                $teacherStmt->execute();
+                $teacherResult = $teacherStmt->get_result();
+                $teacherData = $teacherResult->fetch_assoc();
+                $teacherName = $teacherData['user_name'] ?? 'Unknown Teacher';
+                $teacherStmt->close();
+
+                $skillNameForLog = $skill->skill_name ?? 'Unknown Skill';
+
+                logActivity(
+                    $conn,
+                    $userId,
+                    "Deleted Skill '{$skillNameForLog}' "
+                );
+                // --------------------
             } else {
-                setFlash('skills', 'error', "Failed to delete!");
+                setFlash('skills', 'warning', "Failed to delete!");
             }
         }
-
         header("Location: skills.php");
         exit();
     }
@@ -166,10 +206,10 @@ include('../includes/layouts/header.php');
             <!-- Search & Sort -->
             <div class="search-sort-container">
                 <form method="GET" class="search-sort-form">
-                    <input class="search-input" type="text" name="search" placeholder="Search by ID or Name" value="<?= htmlspecialchars($search) ?>">
+                    <input class="search-input" type="text" name="search" placeholder="Search by Name" value="<?= htmlspecialchars($search) ?>">
                     <select class="sort-select" name="sort">
-                        <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>1 →</option>
-                        <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>>← 1</option>
+                        <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>ASC</option>
+                        <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>>DESC</option>
                     </select>
                     <button type="submit" class="search-btn">Apply</button>
                 </form>
@@ -194,74 +234,83 @@ include('../includes/layouts/header.php');
                         $categories->data_seek(0);
                         while ($cat = $categories->fetch_assoc()) $catsArray[$cat['category_id']] = $cat['category_name'];
                         ?>
-                        <?php foreach ($skills as $skill): ?>
-                            <tr id="skill-<?= $skill->skill_id ?>">
-                                <?php if ($edit_skill && $edit_skill->skill_id == $skill->skill_id && $role === 'teacher'): ?>
-                                    <!-- Inline Edit Row -->
-                                    <form method="POST" enctype="multipart/form-data">
-                                        <td><?= $skill->skill_id ?></td>
-                                        <td>
-                                            <input type="hidden" name="skill_id" value="<?= $skill->skill_id ?>">
-                                            <input type="text" name="skill_name" value="<?= htmlspecialchars($skill->skill_name) ?>" required>
-                                        </td>
-                                        <td><input type="text" value="<?= htmlspecialchars($skill->offered_by_name ?? '') ?>" disabled></td>
-                                        <td><textarea name="description" required><?= htmlspecialchars($skill->description) ?></textarea></td>
-                                        <td>
-                                            <select name="categories_category_id" required>
-                                                <option value="">Select Category</option>
-                                                <?php foreach ($catsArray as $id => $name): ?>
-                                                    <option value="<?= $id ?>" <?= $skill->categories_category_id == $id ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <div style="display:flex; align-items:center; gap:8px;">
-                                                <?php if (!empty($skill->thumbnail)): ?>
-                                                    <img src="../<?= $skill->thumbnail ?>" style="width:50px;height:50px;object-fit:cover;">
-                                                <?php else: ?>
-                                                    <div style="width:50px;height:50px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;">No Image</div>
-                                                <?php endif; ?>
-                                                <input type="file" name="thumbnail" accept="image/*" style="margin:0;">
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <button type="submit" name="edit_skill" class="action-link">Save</button>
-                                            <a href="skills.php" class="action-link delete">Cancel</a>
-                                        </td>
-                                    </form>
-                                <?php else: ?>
-                                    <!-- Normal Row -->
-                                    <?php if ($role === 'admin'): ?>
-                                        <td><?= htmlspecialchars($skill->skill_id) ?></td>
-                                    <?php endif; ?>
-                                    <td><?= htmlspecialchars($skill->skill_name) ?></td>
-                                    <td><?= htmlspecialchars($skill->offered_by_name ?? '—') ?></td>
-                                    <td><?= htmlspecialchars($skill->description) ?></td>
-                                    <td><?= htmlspecialchars($skill->category_name ?? '—') ?></td>
-                                    <td>
-                                        <?php if (!empty($skill->thumbnail) && file_exists("../" . $skill->thumbnail)): ?>
-                                            <img src="../<?= $skill->thumbnail ?>" alt="Thumbnail" style="width:50px;height:50px;object-fit:cover;">
-                                        <?php else: ?>
-                                            <div style="width:50px;height:50px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;">
-                                                No Image
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
 
-                                    <?php if ($role === 'teacher' && $teacherStatus === 'active'): ?>
+                        <?php if (!empty($skills)): ?>
+
+                            <?php foreach ($skills as $skill): ?>
+                                <tr id="skill-<?= $skill->skill_id ?>">
+                                    <?php if ($edit_skill && $edit_skill->skill_id == $skill->skill_id && $role === 'teacher'): ?>
+                                        <!-- Inline Edit Row -->
+                                        <form method="POST" enctype="multipart/form-data">
+                                            <td>
+                                                <input type="hidden" name="skill_id" value="<?= $skill->skill_id ?>">
+                                                <input type="text" name="skill_name" value="<?= htmlspecialchars($skill->skill_name) ?>" required>
+                                            </td>
+                                            <td><input type="text" value="<?= htmlspecialchars($skill->offered_by_name ?? '') ?>" disabled></td>
+                                            <td><textarea name="description" required><?= htmlspecialchars($skill->description) ?></textarea></td>
+                                            <td>
+                                                <select name="categories_category_id" required>
+                                                    <option value="">Select Category</option>
+                                                    <?php foreach ($catsArray as $id => $name): ?>
+                                                        <option value="<?= $id ?>" <?= $skill->categories_category_id == $id ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <div style="display:flex; align-items:center; gap:8px;">
+                                                    <?php if (!empty($skill->thumbnail)): ?>
+                                                        <img src="../<?= $skill->thumbnail ?>" style="width:50px;height:50px;object-fit:cover;">
+                                                    <?php else: ?>
+                                                        <div style="width:50px;height:50px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;">No Image</div>
+                                                    <?php endif; ?>
+                                                    <input type="file" name="thumbnail" accept="image/*" style="margin:0;">
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <button type="submit" name="edit_skill" class="action-link " style="text-decoration: none">Save</button>
+                                                <a href=" skills.php" class="action-link delete" style="text-decoration: none">Cancel</a>
+                                            </td>
+                                        </form>
+                                    <?php else: ?>
+                                        <!-- Normal Row -->
+                                        <?php if ($role === 'admin'): ?>
+                                            <td><?= htmlspecialchars($skill->skill_id) ?></td>
+                                        <?php endif; ?>
+                                        <td><?= htmlspecialchars($skill->skill_name) ?></td>
+                                        <td><?= htmlspecialchars($skill->offered_by_name ?? '—') ?></td>
+                                        <td><?= htmlspecialchars($skill->description) ?></td>
+                                        <td><?= htmlspecialchars($skill->category_name ?? '—') ?></td>
                                         <td>
-                                            <?php if ($skill->owned_by_user): ?>
-                                                <a href="?edit=<?= $skill->skill_id ?>#skill-<?= $skill->skill_id ?>" class="action-link" style="text-decoration:none">✏️ Edit</a>
-                                                <form method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure?');">
-                                                    <input type="hidden" name="skill_id" value="<?= $skill->skill_id ?>">
-                                                    <button type="submit" name="delete_skill" class="action-link delete" style="text-decoration:none">🗑️ Delete</button>
-                                                </form>
+                                            <?php if (!empty($skill->thumbnail) && file_exists("../" . $skill->thumbnail)): ?>
+                                                <img src=" ../<?= $skill->thumbnail ?>" alt="Thumbnail" style="width:50px;height:50px;object-fit:cover;">
+                                            <?php else: ?>
+                                                <div style="width:50px;height:50px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;">
+                                                    No Image
+                                                </div>
                                             <?php endif; ?>
                                         </td>
+
+                                        <?php if ($role === 'teacher' && $teacherStatus === 'active'): ?>
+                                            <td>
+                                                <?php if ($skill->owned_by_user): ?>
+                                                    <a href="?edit=<?= $skill->skill_id ?>#skill-<?= $skill->skill_id ?>" class="action-link" style="text-decoration:none">✏️ Edit</a>
+                                                    <form method="POST" style="display:inline-block;" onsubmit="return confirm('Are you sure?');">
+                                                        <input type="hidden" name="skill_id" value="<?= $skill->skill_id ?>">
+                                                        <button type="submit" name="delete_skill" class="action-link delete" style="text-decoration:none">🗑️ Delete</button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endif; ?>
                                     <?php endif; ?>
-                                <?php endif; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="<?= ($role === 'admin' ? 7 : ($role === 'teacher' ? 6 : 5)) ?>" style="text-align:center;">
+                                    No skills found.
+                                </td>
                             </tr>
-                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>

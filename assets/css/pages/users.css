@@ -4,7 +4,7 @@
 }
 
 .role-filter-form {
-  display: flex;              /* align like search form */
+  display: flex; 
   justify-content: flex-start;
   gap: 10px;
   align-items: center;
@@ -18,14 +18,14 @@
 
 .role-filter-form select {
   padding: 6px 10px;
-  border-radius: 4px;         /* match search input/button */
+  border-radius: 4px; /* match search input/button */
   border: 2px solid #6c00bb;
   font-size: 14px;
   cursor: pointer;
-  color:#111;
+  color: #111;
   background-color: #fff;
   transition: all 0.2s ease;
-  height: 34px;               /* match search input/button height */
+  height: 34px; /* match search input/button height */
 }
 
 .role-filter-form select:hover,
@@ -34,7 +34,6 @@
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
   outline: none;
 }
-
 
 /* Table container */
 .table-container {
@@ -51,6 +50,7 @@
   border-collapse: collapse;
   min-width: 600px;
   background-color: #fff;
+
 }
 
 .users-table th,
@@ -58,7 +58,7 @@
   padding: 12px 15px;
   border: 1px solid #ddd;
   text-align: left;
-  vertical-align:middle;
+  vertical-align: middle;
 }
 
 /* Table header */
@@ -72,6 +72,8 @@
 .users-table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
+
+
 
 /* Hover effect */
 .users-table tr:hover {
@@ -120,23 +122,20 @@
 
 /* ---------------- Status Column Toggle Buttons ---------------- */
 .users-table button.activate-btn {
-    color: #049b28; 
-    border: 1px solid #049b28;
-
+  color: #049b28;
+  border: 1px solid #049b28;
 }
 
 .users-table button.deactivate-btn {
-    color: #d80e22; 
-    border: 1px solid #d80e22;
-
+  color: #d80e22;
+  border: 1px solid #d80e22;
 }
 
 .users-table button.activate-btn:hover,
 .users-table button.deactivate-btn:hover {
-    opacity: 0.85;
-    transition: opacity 0.2s ease;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
 }
-
 
 /* Action links */
 .action-link {

@@ -1,10 +1,5 @@
+<!-- =================TEACHER DASHBOARD PAGE======================= -->
 <?php
-// ==========================================
-// dashboard/teacher_dashboard.php
-// Teacher-facing dashboard showing offered
-// skills, enrollments, feedbacks, and activity.
-// ==========================================
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -16,9 +11,6 @@ include('../middlewares/role_check.php');
 
 allowRoles(['teacher']);
 
-// ==============================
-// Include Models
-// ==============================
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Teacher.php';
 require_once __DIR__ . '/../models/Enrollment.php';
@@ -27,35 +19,38 @@ require_once __DIR__ . '/../models/Feedback.php';
 require_once __DIR__ . '/../models/Skill.php';
 require_once __DIR__ . '/../models/Category.php';
 
-// ==============================
+
 // Teacher Info
-// ==============================
 $teacher_user_id = $_SESSION['user_id'];
 $teacher = User::getById($conn, $teacher_user_id);
 $user_name = $teacher->full_name ?? 'Unknown User';
 
 
-// Fetch Teacher Skills (only active ones)
+// Fetch Teacher Skills with active status
 $teacher_skills = Teacher::getAllByUserId($conn, $teacher_user_id);
 
-// Only keep active skills
+// Fetch Teacher with active status
 $teacher_skills = array_filter($teacher_skills, fn($t) => $t->status === 'active');
 
-// Extract skill IDs
+// Extract Teacher Skill IDs
 $skill_ids = array_map(fn($t) => $t->skills_skill_id, $teacher_skills);
 
 // Count actual skills offered
 $skills_offered = count($teacher_skills);
 
-// ==============================
 // Fetch Enrollments
-// ==============================
 $enrollments = [];
 if (!empty($skill_ids)) {
     $placeholders = implode(',', array_fill(0, count($skill_ids), '?'));
     $types = str_repeat('i', count($skill_ids));
 
-    $sql = "SELECT * FROM enrollments WHERE skills_skill_id IN ($placeholders)";
+    $sql = "
+    SELECT e.*
+    FROM enrollments e
+    JOIN teachers t ON t.skills_skill_id = e.skills_skill_id
+    WHERE t.users_user_id = ?
+      AND t.status = 'active'
+";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param($types, ...$skill_ids);
     $stmt->execute();
@@ -70,21 +65,14 @@ if (!empty($skill_ids)) {
 $active_enrollments = count(array_filter($enrollments, fn($e) => $e->status === 'enrolled'));
 $completed_enrollments = count(array_filter($enrollments, fn($e) => $e->status === 'completed'));
 
-// ==============================
 // Fetch Feedbacks
-// ==============================
 $feedbacks = Feedback::getBySkillIds($conn, $skill_ids);
 $pending_feedbacks = count(array_filter($feedbacks, fn($f) => $f->feedback_given === 'no'));
 
-// ==============================
 // Fetch Recent Activities (Teacher Only)
-// ==============================
 $recent_activities = getRecentActivities($conn, 'teacher', $teacher_user_id, 5); // limit 5
 
-
-// ==============================
 // Dashboard Cards Configuration
-// ==============================
 $cards = [
     ['title' => 'Skills Offered', 'count' => $skills_offered, 'icon' => 'fa-chalkboard-teacher', 'color' => '#6f42c1'],
     ['title' => 'Active Enrollments', 'count' => $active_enrollments, 'icon' => 'fa-user-graduate', 'color' => '#1cc88a'],
@@ -101,8 +89,10 @@ $cards = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard | SkillShare</title>
+
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 

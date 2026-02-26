@@ -1,3 +1,5 @@
+<!-- =======INDEX PAGE ========-- -->
+
 <?php
 
 ini_set('display_errors', 1);
@@ -36,7 +38,7 @@ if (isset($_SESSION['user_id'])) {
             </a>
         </div>
         <nav class="nav" style="margin-right:auto;">
-            <a href="about.php" style="color:var(--primary)" ><b>About</b></a>
+            <a href="about.php" style="color:var(--primary)"><b>About</b></a>
             <a href="contact.php" style="color:var(--primary)"><b>Contact</b></a>
         </nav>
         <nav class="nav">

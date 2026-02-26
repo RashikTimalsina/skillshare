@@ -33,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Invalid Email format.";
     }
 
-    if (strlen($password) < 8) {
-        $errors[] = "Password must be at least 8 characters.";
+    if (strlen($password) < 6) {
+        $errors[] = "Password must be at least 6 characters.";
     }
 
     if ($password !== $confirm) {

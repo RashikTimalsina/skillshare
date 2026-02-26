@@ -72,7 +72,7 @@
 /* ----------------- MIDDLE SECTION ----------------- */
 .dashboard-middle {
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  grid-template-columns: 4fr;
   gap: 1.5rem;
   min-height:0;
   margin: 1.5rem 0;
@@ -233,7 +233,7 @@
 /* ----------------- MIDDLE SECTION ----------------- */
 #learner-dashboard-main .learner-middle-section {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 4fr;
   gap: 1rem;
   margin: 1rem 0;
 }
@@ -358,7 +358,7 @@
 /* ----------------- MIDDLE SECTION ----------------- */
 #teacher-dashboard-main .teacher-middle-section {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 4fr;
   gap: 1rem;
   margin: 1rem 0;
 }

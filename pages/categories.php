@@ -8,7 +8,8 @@ session_start();
 include('../includes/functions.php');
 include('../includes/config.php');
 include('../middlewares/session_check.php');
-include('../middlewares/role_check.php'); // load the function
+require_once '../includes/flash_messages.php';
+include('../middlewares/role_check.php');
 
 allowRoles(['admin', 'teacher', 'learner']);
 require_once '../models/Category.php';
@@ -31,7 +32,11 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
         'category_name' => trim($_POST['category_name']),
         'description'   => trim($_POST['description'])
     ];
-    Category::create($conn, $data, $userId, $userName);
+    if (Category::create($conn, $data, $userId, $userName)) {
+        setFlash('categories', 'success', 'Category added successfully.');
+    } else {
+        setFlash('categories', 'error', 'Failed to add category.');
+    }
 
     header("Location: categories.php");
     exit();
@@ -46,8 +51,11 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
         'category_name' => trim($_POST['category_name']),
         'description'   => trim($_POST['description'])
     ];
-    Category::update($conn, $categoryId, $data, $userId, $userName);
-
+    if (Category::update($conn, $categoryId, $data, $userId, $userName)) {
+        setFlash('categories', 'success', 'Category updated successfully.');
+    } else {
+        setFlash('categories', 'error', 'Failed to update category.');
+    }
     header("Location: categories.php");
     exit();
 }
@@ -57,8 +65,14 @@ if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['
 // --------------------
 if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_category'])) {
     $categoryId = $_POST['delete_category'];
-    Category::delete($conn, $categoryId, $userId, $userName);
+    if (Category::delete($conn, $categoryId, $userId, $userName)) {
+        setFlash('categories', 'success', 'Category deleted successfully.');
+    } else {
+        setFlash('categories', 'error', 'Failed to delete category.');
+    }
 
+    header("Location: categories.php");
+    exit();
     header("Location: categories.php");
     exit();
 }
@@ -74,9 +88,10 @@ $sort   = ($sort === 'DESC') ? 'DESC' : 'ASC';
 
 // Filter by search term
 if ($search) {
-    $allCategories = array_filter($allCategories, function ($cat) use ($search) {
-        return str_contains(strtolower($cat->category_name), strtolower($search))
-            || str_contains((string)$cat->category_id, $search);
+    $searchLower = strtolower($search);
+    $allCategories = array_filter($allCategories, function ($cat) use ($searchLower) {
+        return str_starts_with(strtolower($cat->category_name), $searchLower)
+            || str_starts_with((string)$cat->category_id, $searchLower);
     });
 }
 
@@ -102,17 +117,20 @@ $edit_category = $edit_category_id ? Category::getById($conn, $edit_category_id)
         <?php include('../includes/layouts/topbar.php'); ?>
 
         <div class="main-content">
+
             <div class="page-header">
                 <h2>Categories Management</h2>
             </div>
 
+            <?php showFlash('categories'); ?>
+            
             <!-- Search & Sort -->
             <div class="search-sort-container">
                 <form method="GET" class="search-sort-form">
                     <input class="search-input" type="text" name="search" placeholder="Search by ID or Name" value="<?= htmlspecialchars($search) ?>">
                     <select class="sort-select" name="sort">
-                        <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>1 →</option>
-                        <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>><- 1</option>
+                        <option value="ASC" <?= $sort === 'ASC' ? 'selected' : '' ?>>ASC</option>
+                        <option value="DESC" <?= $sort === 'DESC' ? 'selected' : '' ?>>DESC</option>
                     </select>
                     <button class="search-btn" type="submit">Apply</button>
                 </form>

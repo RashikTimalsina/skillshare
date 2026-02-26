@@ -1,3 +1,4 @@
+<!-- =================MESSAGES PAGE======================= -->
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -10,7 +11,7 @@ include('../middlewares/session_check.php');
 $user_id = $_SESSION['user_id'];
 $user_role = $_SESSION['user_role'] ?? 'learner';
 
-// ================= GET CONVERSATIONS =================
+// Conversations
 $conversations = [];
 $stmt = $conn->prepare("
     SELECT u.user_id, u.user_name, u.role,
@@ -34,7 +35,7 @@ $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) $conversations[] = $row;
 $stmt->close();
 
-// ================= AUTO-SELECT FIRST CONVERSATION =================
+// auto select all conversation 
 $active_receiver_id = isset($_GET['receiver_id']) ? intval($_GET['receiver_id']) : null;
 if (!$active_receiver_id && !empty($conversations)) {
     $active_receiver_id = $conversations[0]['user_id'];
@@ -42,7 +43,7 @@ if (!$active_receiver_id && !empty($conversations)) {
     exit();
 }
 
-// ================= GET MESSAGES =================
+// get messages
 $messages = [];
 if ($active_receiver_id) {
     $stmt = $conn->prepare("
@@ -70,7 +71,7 @@ if ($active_receiver_id) {
     $stmt->close();
 }
 
-// ================= HANDLE SEND MESSAGE =================
+// send message
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
     $receiver_id = intval($_POST['receiver_id']);
@@ -125,7 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
             $stmt->execute();
             $stmt->close();
         }
-        // ================= ACTIVITY LOGGING =================
+        
+        //activity logs
 
         // Get sender name
         $stmt = $conn->prepare("SELECT user_name FROM users WHERE user_id = ?");
@@ -143,21 +145,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
         $stmt->fetch();
         $stmt->close();
 
-        // 1️⃣ Sender Activity
+        // sender activity
         logActivity(
             $conn,
             $user_id,
             "Sent message to '{$receiver_name}'"
         );
 
-        // 2️⃣ Receiver Activity
+        //  receiver activity
         logActivity(
             $conn,
             $receiver_id,
             "Received message from '{$sender_name}'"
         );
 
-        // 3️⃣ Admin Activity (All Admins)
+        // admin activity log
         $adminRes = $conn->query("SELECT user_id FROM users WHERE role = 'admin'");
         while ($admin = $adminRes->fetch_assoc()) {
             logActivity(
@@ -246,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['receiver_id'])) {
                                 foreach ($conversations as $conv) {
                                     if ($conv['user_id'] == $active_receiver_id) {
                                         echo htmlspecialchars($conv['user_name']);
-                                        if ($conv['role'] === 'admin') ;
+                                        if ($conv['role'] === 'admin');
                                         break;
                                     }
                                 }

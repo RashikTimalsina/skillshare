@@ -113,17 +113,15 @@ class Enrollment
 
 
 
-    // Get enrollments for a teacher (all students enrolled in teacher's skills)
     public static function getByTeacherSkills($conn, $teacherUserId)
     {
         $stmt = $conn->prepare("
-            SELECT e.* 
-            FROM enrollments e
-            JOIN skills s ON e.skills_skill_id = s.skill_id
-            JOIN teachers t ON s.skill_id = t.skills_skill_id
-            WHERE t.users_user_id=?
-            ORDER BY e.enrolled_at DESC
-        ");
+        SELECT e.* 
+        FROM enrollments e
+        JOIN skills s ON e.skills_skill_id = s.skill_id
+        WHERE s.created_by = ?
+        ORDER BY e.enrolled_at DESC
+    ");
         $stmt->bind_param("i", $teacherUserId);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -134,7 +132,7 @@ class Enrollment
         $stmt->close();
         return $enrollments;
     }
-
+    
     public static function getAllByUserId($conn, $userId)
     {
         $sql = "

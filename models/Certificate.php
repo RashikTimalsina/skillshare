@@ -24,9 +24,8 @@ class Certificate
         $this->remarks = $data['remarks'] ?? null;
     }
 
-    // -------------------------
+
     // Fetch single certificate by ID
-    // -------------------------
     public static function getById(mysqli $conn, int $id)
     {
         $stmt = $conn->prepare("
@@ -41,12 +40,11 @@ class Certificate
         $stmt->execute();
         $result = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $result ?: []; // return array instead of object
+        return $result ?: []; 
     }
 
-    // -------------------------
+
     // Fetch all certificates
-    // -------------------------
     public static function getAll(mysqli $conn)
     {
         $sql = "
@@ -65,7 +63,7 @@ class Certificate
         return $certificates;
     }
 
-
+        //Fetch all learners 
     public static function getAllByLearner(mysqli $conn, int $learnerId)
     {
         $stmt = $conn->prepare("
@@ -82,15 +80,14 @@ class Certificate
         $res = $stmt->get_result();
         $certificates = [];
         while ($row = $res->fetch_assoc()) {
-            $certificates[] = $row; // keep as array
+            $certificates[] = $row; 
         }
         $stmt->close();
         return $certificates;
     }
 
-    // -------------------------
+  
     // Create / insert certificate
-    // -------------------------
     public static function create(mysqli $conn, array $data)
     {
         $stmt = $conn->prepare("
@@ -115,9 +112,8 @@ class Certificate
         return $id;
     }
 
-    // -------------------------
+  
     // Issue certificate (teacher/admin)
-    // -------------------------
     public static function issue(mysqli $conn, array $data)
     {
         session_start();
@@ -139,8 +135,11 @@ class Certificate
             }
             $stmt->close();
             $data['issued_by'] = $issuerId;
-        } elseif ($issuerRole === 'admin') {
-            // Admin must preserve teacher as issuer
+        } 
+        
+        elseif ($issuerRole === 'admin') {
+
+            // if not teacher fall back to admin 
             $stmt = $conn->prepare("
                 SELECT users_user_id FROM teachers 
                 WHERE skills_skill_id=? AND status='active' LIMIT 1
@@ -178,9 +177,8 @@ class Certificate
         return self::create($conn, $data);
     }
 
-    // -------------------------
+
     // Revoke certificate
-    // -------------------------
     public static function revoke(mysqli $conn, int $id)
     {
         session_start();
@@ -210,9 +208,8 @@ class Certificate
         return $affected > 0;
     }
 
-    // -------------------------
+   
     // Auto-issue after enrollment completion
-    // -------------------------
     public static function createForEnrollment(mysqli $conn, int $enrollmentId, int $learnerId, $issuedBy = null)
     {
         $enrollment = Enrollment::getById($conn, $enrollmentId);

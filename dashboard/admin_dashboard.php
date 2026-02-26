@@ -1,26 +1,20 @@
-<?php
+<!-- =================ADMIN DASHBOARD PAGE======================= -->
 
+<?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 include('../includes/config.php');
-
 require_once __DIR__ . '/../includes/functions.php';
-
-// Ensure the user is logged in else redirects if session is missing
 include('../middlewares/session_check.php');
-
-// Ensure only authorized roles (admin) can access this dashboard
 include('../middlewares/role_check.php');
 allowRoles(['admin']);
 
 $adminStats = getAdminStats($conn);
 
 
-// ====================== DASHBOARD OVERVIEW COUNTS ======================
-// Defines dashboard cards with their corresponding SQL queries
-// Each query returns a single aggregate value
+// Dashboard overview cards
 $cards = [
     'Total Users' => "SELECT COUNT(*) as total FROM users",
     'Total Learners' => "SELECT COUNT(*) as total FROM users WHERE role='learner'",
@@ -31,8 +25,8 @@ $cards = [
 // Execute each query and store the resulting count
 $cardCounts = [];
 foreach ($cards as $title => $query) {
-    $res = mysqli_query($conn, $query);              // Execute SQL query
-    $cardCounts[$title] = mysqli_fetch_assoc($res)['total'] ?? 0; // Safely extract count
+    $res = mysqli_query($conn, $query);              //
+    $cardCounts[$title] = mysqli_fetch_assoc($res)['total'] ?? 0;
 }
 
 // Fetch last 5 activities for admin (all users)
@@ -41,44 +35,41 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
 ?>
 
 
-<!-- Admin dashboard UI starts here -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <!-- Standard meta configuration -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | SkillShare</title>
 
-    <!-- Global layout and dashboard-specific styles -->
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pM2L6nMxU...yourhash..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 </head>
 
 <body>
     <div class="layout-wrapper">
-        <!-- Sidebar navigation -->
+
         <?php include('../includes/layouts/sidebar.php'); ?>
 
         <div class="main-content-wrapper">
-            <!-- Top navigation bar -->
+
             <?php include('../includes/layouts/topbar.php'); ?>
 
             <main class="main-content">
-
-                <!-- Logged-in admin greeting -->
                 <h3>
                     Welcome, <?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?>!
                 </h3>
 
-                <!-- DASHBOARD METRIC CARDS -->
+                <!-- Dashboard overview cards-->
                 <section class="dashboard-overview">
                     <?php
                     $colors = ['#007bff', '#28a745', '#ffc107', '#17a2b8'];
-                    $icons = ['fa-users', 'fa-user-graduate', 'fa-chalkboard-teacher', 'fa-lightbulb']; // assign icons
+                    $icons = ['fa-users', 'fa-user-graduate', 'fa-chalkboard-teacher', 'fa-lightbulb'];
                     $i = 0;
                     foreach ($cardCounts as $title => $count):
                         $color = $colors[$i % count($colors)];
@@ -91,7 +82,6 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
                     <?php $i++;
                     endforeach; ?>
                 </section>
-
                 <section class="dashboard-overview">
                     <?php
                     $colors = [' #6f42c1', '#fd7e14', '#20c997', '#e83e8c'];
@@ -111,10 +101,8 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
 
 
 
-                <!-- MIDDLE SECTION -->
+                <!-- Recent Activities table -->
                 <div class="dashboard-middle">
-
-                    <!-- Recent Activity Log -->
                     <section class="activities-section">
                         <h3 style="margin-bottom: 8px;">Recent Activities</h3>
 
@@ -141,10 +129,10 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
                             </table>
                         </div>
                     </section>
-                    
+
                 </div>
 
-                <!-- ADMIN QUICK ACTION SHORTCUTS -->
+                <!-- Quick Actions cards -->
                 <h3>Quick Actions</h3>
                 <section class="quick-actions">
                     <?php
@@ -170,7 +158,6 @@ $recent_activities = getRecentActivities($conn, 'admin', $_SESSION['user_id'], 5
 
             </main>
 
-            <!-- Footer -->
             <?php include('../includes/layouts/footer.php'); ?>
         </div>
     </div>

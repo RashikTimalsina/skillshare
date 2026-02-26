@@ -1,10 +1,10 @@
-/* Same as users.css for consistent layout */
+
 @import url('users.css');
 
-/* Style for learner enroll form */
+/*Additional style for learner enroll form */
 .learner-enroll-form {
     display: flex;
-    gap: 10px; /* space between select and button */
+    gap: 10px; 
     margin-top: 15px;
     align-items: center;
 }

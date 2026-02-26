@@ -1,3 +1,4 @@
+<!-- =================TEACHER REWARDS PAGE (ADMIN)======================= -->
 <?php
 
 ini_set('display_errors', 1);
@@ -7,7 +8,7 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../middlewares/auth_check.php';
 require_once __DIR__ . '/../middlewares/role_check.php';
-require_once __DIR__ . '/../includes/functions.php'; 
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../models/TeacherReward.php';
 require_once __DIR__ . '/../includes/flash_messages.php';
 
