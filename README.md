@@ -57,11 +57,11 @@ Built as a full-stack academic system, Skillshare incorporates modular design, r
 
 #### Database
 
--MySQL
+- MySQL
 
 #### Environment
 
--Apache / Local server (XAMPP, MAMP, etc.)
+- Apache / Local server (XAMPP, MAMP, etc.)
 
 ## Installation Guide
 
@@ -97,5 +97,4 @@ Set your database credentials:
 #### 6. Run the Project
 
 Start your local server and open:
-
 `http://localhost/SkillSharingSystem`
